@@ -1,6 +1,6 @@
 $(function(){
     require(['socket.io/socket.io.js']);
-    //
+    //asdasdasdasd
     let BG = window.BG = new BoardGame();
     let socket = io.connect();
     BG.socket = socket;
