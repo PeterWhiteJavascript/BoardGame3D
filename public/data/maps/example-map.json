@@ -1,0 +1,308 @@
+    {
+    "tiles" : [
+        {
+            "x": 0,
+            "y": 0,
+            "value": 260,
+            "rank": 1,
+            "name": "Bakery",
+            "type": "shop",
+            "district": 0
+        },
+        {
+            "x": 0,
+            "y": 2,
+            "value": 260,
+            "rank": 1,
+            "name": "Bakery",
+            "type": "shop",
+            "district": 0
+        },
+        {
+            "x": 2,
+            "y": 2,
+            "value": 220,
+            "rank": 2,
+            "name": "Butcher",
+            "type": "shop",
+            "district": 0
+        },
+        {
+            "x": 4,
+            "y": 2,
+            "value": 220,
+            "rank": 2,
+            "name": "Lemonade Stall",
+            "type": "shop",
+            "district": 0
+        },
+        {
+            "x": 6,
+            "y": 2,
+            "value": 300,
+            "rank": 2,
+            "name": "Clothing Store",
+            "type": "shop",
+            "district": 0
+        },
+        {
+            "x": 6,
+            "y": 4,
+            "value": 400,
+            "rank": 3,
+            "name": "Furniture Shop",
+            "type": "shop",
+            "district": 0
+        },
+        {
+            "x": 6,
+            "y": 6,
+            "type": "main"
+        },
+        {
+            "x": 6,
+            "y": 8,
+            "value": 600,
+            "rank": 1,
+            "name": "Paint Shop",
+            "type": "shop",
+            "district": 1
+        },
+        {
+            "x": 0,
+            "y": 4,
+            "name": "Cashew Vendor",
+            "type": "vendor",
+            "item": "Cashew",
+            "price": 0.5,
+            "text": ["Cheap cashews here!"]
+        },
+        {
+            "x": 2,
+            "y": 8,
+            "value": 350,
+            "rank": 1,
+            "name": "Ice Cream Shop",
+            "type": "shop",
+            "district": 2
+        },
+        {
+            "x": 0,
+            "y": 8,
+            "value": 500,
+            "rank": 3,
+            "name": "Jewelry Store",
+            "type": "shop",
+            "district": 2
+        },
+        {
+            "x": 0,
+            "y": 6,
+            "value": 400,
+            "rank": 1,
+            "name": "Chinese Restaurant",
+            "type": "shop",
+            "district": 2
+        },
+        {
+            "x": 4,
+            "y": 8,
+            "name": "Peanut Vendor",
+            "type": "vendor",
+            "item": "Peanut",
+            "price": 1,
+            "text": ["Want a peanut? \nIt'll only cost you peanuts hahaha!"]
+        },
+        {
+            "x": 8,
+            "y": 8,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 0",
+            "type": "shop",
+            "district": 1
+        },
+        {
+            "x": 10,
+            "y": 9,
+            "name": "Almond Vendor",
+            "type": "vendor",
+            "item": "Almond",
+            "price": 1,
+            "text": ["Fresh almonds here. \nThey're pretty cheap I guess."]
+        },
+        {
+            "x": 14,
+            "y": 9,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 1",
+            "type": "shop",
+            "district": 1
+        },
+        {
+            "x": 14,
+            "y": 7,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 2",
+            "type": "shop",
+            "district": 1
+        },
+        {
+            "x": 12,
+            "y": 4,
+            "name": "Item Shop",
+            "type": "itemshop",
+            "items":[
+                [0, 100],
+                [2, 100],
+                [6, 300]
+            ]
+        },
+        {
+            "x": 12,
+            "y": 6,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 3",
+            "type": "shop",
+            "district": 1
+        },
+        {
+            "x": 12,
+            "y": 9,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 4",
+            "type": "shop",
+            "district": 1
+        },
+        {
+            "x": 10,
+            "y": 4,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 5",
+            "type": "shop",
+            "district": 1,
+            "dirs": ["left"]
+        },
+        {
+            "x": 8,
+            "y": 4,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 6",
+            "type": "shop",
+            "district": 1,
+            "dirs": ["left"]
+        },
+        {
+            "x": 12,
+            "y": 2,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 7",
+            "type": "shop",
+            "district": 3
+        },
+        {
+            "x": 12,
+            "y": 0,
+            "name": "Cashew Vendor",
+            "type": "vendor",
+            "item": "Cashew",
+            "price": 1,
+            "text": ["These cashews are the real deal. \nAre you gonna pay up?"]
+        },
+        {
+            "x": 10,
+            "y": 0,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 8",
+            "type": "shop",
+            "district": 3
+        },
+        {
+            "x": 8,
+            "y": 0,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 9",
+            "type": "shop",
+            "district": 3
+        },
+        {
+            "x": 6,
+            "y": 0,
+            "value": 50,
+            "rank": 1,
+            "name": "Street Shop 10",
+            "type": "shop",
+            "district": 3
+        }
+    ],
+    "districts": [
+        {
+            "color": "pink",
+            "numShops": 5,
+            "stockPrice": 10
+        },
+        {
+            "color": "blue",
+            "numShops": 7,
+            "stockPrice": 10
+        },
+        {
+            "color": "green",
+            "numShops": 4,
+            "stockPrice": 10
+        },
+        {
+            "color": "red",
+            "numShops": 4,
+            "stockPrice": 10
+        }
+    ],
+    "sets":[
+        {
+            "name": "Just a Peanut",
+            "items": ["Peanut"],
+            "value": 100
+        },
+        {
+            "name": "All 3 Nuts",
+            "items": ["Peanut", "Cashew", "Almond"],
+            "value": 500
+        }
+    ],
+    "setPieces":{
+        "Peanut": 5,
+        "Almond": 25,
+        "Cashew": 150
+    },
+    "map": {
+        "w": 16,
+        "h": 12,
+        "bgm": "bgm-01"
+    },
+    "modes": {
+        "ffa": {
+            "startMoney": 1000,
+            "goal": 20000,
+            "bankruptcyLimit": 3
+        },
+        "teams": {
+            "startMoney": 2000,
+            "goal": 20000,
+            "bankruptcyLimit": 3
+        },
+        "timed": {
+            "startMoney": 2000,
+            "turns": 40,
+            "bankruptcyLimit": 3
+        }
+    }
+}

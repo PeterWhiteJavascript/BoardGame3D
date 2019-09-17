@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Board Game</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <script src='lib/quintus.js'></script>
+        <script src='lib/quintus_sprites.js'></script>
+        <script src='lib/quintus_scenes.js'></script>
+        <script src='lib/quintus_input.js'></script>
+        <script src='lib/quintus_anim.js'></script>
+        <script src='lib/quintus_touch.js'></script>
+        <script src='lib/quintus_ui.js'></script>
+        
+        <script src="lib/astar.js"></script>
+        <script src="lib/jquery-3.1.1.js"></script>
+        <script src="lib/jquery-ui.min.js"></script>
+        <script src="lib/seedrandom.min.js"></script>
+        <script src="https://threejs.org/build/three.js"></script>
+        <script src="lib/orbit-controls.js"></script> 
+        <script src="lib/OBJLoader.js"></script> 
+        <script src="lib/MTLLoader.js"></script> 
+        <script src="socket.io/socket.io.js"></script>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <script src="lib/require.min.js"></script>
+        <script src="js/client.js"></script>
+        <script src="js/board-game.js"></script>
+        <script src="js/objects.js"></script>
+        <script src="js/main.js"></script>
+        
+        <div id="main-content">
+            <div id="content-container">
+                <div id="three-container">
+                    <canvas id="three-canvas"></canvas>
+                </div>
+                <canvas id='quintus'></canvas>
+            </div>
+        </div>
+    </body>
+</html>
