@@ -2429,7 +2429,7 @@ var boardGameCore = function(exportTarget, key){
                                 }, 100);
                             }, 100);
                         }, 100);
-                    }
+                    }//
                     state.doIt = true;
                 }
                 state.doIt = false;
