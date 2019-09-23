@@ -607,7 +607,7 @@ Quintus.Objects = function(Q) {
     });
     Q.scene("inputs", function(stage){
         stage.on("step", function(){
-            if(!BG.Utility.isActiveUser()) return;
+            if(!BG.Utility.isActiveUser() || BG.state.disableInputs) return;
             let inputs = {};
             if(Q.inputs["confirm"]){
                 inputs["confirm"] = true;

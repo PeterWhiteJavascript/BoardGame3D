@@ -55,9 +55,8 @@ let clientSide = function(){
                 }
             },
             checkSoundIsPlaying: function(sound){
-                //TODO: search through the currently playing sounds to see if it's playing.
-                
-                return false;
+                if(!BG.AudioController.sound[sound] || !BG.AudioController.sound[sound].isPlaying) return false;
+                return true;
             },
             //Used when toggling options
             checkMusicEnabled:function(){
@@ -77,13 +76,14 @@ let clientSide = function(){
                             BG.AudioController.audioLoader.load("audio/sfx/" + sound + ".mp3", function(buffer){
                                 BG.AudioController.sound[sound].setBuffer( buffer );
                                 BG.AudioController.sound[sound].setVolume( BG.OptionsController.options.soundVolume);
-                                BG.AudioController.sound[sound].play();   
-                                BG.AudioController.sound[sound].onEnded(callback);
+                                BG.AudioController.sound[sound].play();
+                                if(callback) BG.AudioController.sound[sound].source.addEventListener('ended', callback);
                             });
                         } else {
                             BG.AudioController.sound[sound].setVolume( BG.OptionsController.options.soundVolume);
                             BG.AudioController.sound[sound].play();   
-                            BG.AudioController.sound[sound].onEnded(callback);
+                            if(callback) BG.AudioController.sound[sound].source.addEventListener('ended', callback);
+                            
                         }
                     }
                 }
@@ -118,20 +118,10 @@ let clientSide = function(){
                     }
                 });
             },
-            createText: function(props){
-                let font = BG.FontsData["helvetiker_bold.typeface.json"];
-
-                let textMaterial =  new THREE.MeshBasicMaterial( {
-                        color: props.color,
-                        transparent: true,
-                        opacity: 1,
-                        side: THREE.DoubleSide
-                } );
-
+            generateTextGeometry: function(props){
+                let font = props.font ? BG.FontsData[props.font] : BG.FontsData["helvetiker_bold.typeface.json"]
                 let geometry = new THREE.ShapeBufferGeometry( font.generateShapes( props.message, props.size) );
-
                 geometry.computeBoundingBox();
-                
                 if(props.drawFrom === "right"){
                     geometry.translate( -geometry.boundingBox.max.x, 0, 0 );
                 } else if(props.drawFrom === "middle"){
@@ -139,14 +129,25 @@ let clientSide = function(){
                 } else {
                     geometry.translate( 0, 0, 0 );
                 }
+                return geometry;
+            },
+            createText: function(props){
+                let textMaterial =  new THREE.MeshBasicMaterial( {
+                        color: props.color,
+                        transparent: true,
+                        opacity: 1,
+                        side: THREE.DoubleSide
+                } );
 
+                let geometry = BG.DisplayController.generateTextGeometry(props);
                 let text = new THREE.Mesh( geometry, textMaterial );
-
+                
                 text.updateMatrix();
                 text.geometry.applyMatrix( text.matrix );
                 text.position.set( props.position.x, props.position.y, props.position.z);
                 text.rotation.set( Math.PI / - 2, 0, 0 );
                 text.updateMatrix();
+                
                 return text;
             },
             //Display the map client side.
@@ -156,6 +157,9 @@ let clientSide = function(){
                 var camera = BG.camera;
                 var scene, renderer, controls;
                 var canvas = document.querySelector("#three-canvas");
+                
+                Physijs.scripts.worker = 'lib/physijs_worker.js';
+                Physijs.scripts.ammo = 'ammo.js';
                 function setup() {
                     setupThreeJS();
                     setupWorld();
@@ -163,10 +167,19 @@ let clientSide = function(){
                         requestAnimationFrame(animate);
                         renderer.render(scene, camera);
                     });
+                    scene.simulate();
                 }
                 function setupThreeJS() {
-                    BG.scene = scene = new THREE.Scene();
-                    
+                    //BG.scene = scene = new THREE.Scene();
+                    BG.scene = scene = new Physijs.Scene({fixedTimeStep: 1 / 120})
+                    scene.setGravity(new THREE.Vector3( 0, -30, 0 ));
+                    scene.addEventListener(
+                        'update',
+                        function(){
+                            scene.simulate(undefined, 2);
+                        }
+                    );
+            
                     renderer = new THREE.WebGLRenderer({canvas: canvas});
                     renderer.setSize(window.innerWidth, window.innerHeight);
                     renderer.shadowMap.enabled = true; //Shadow
@@ -224,6 +237,18 @@ let clientSide = function(){
                     
                     const light = new THREE.AmbientLight(0xFFFFFF, 1);
                     scene.add(light);
+                    
+                    physicsFloorMaterial = Physijs.createMaterial(
+                        new THREE.MeshLambertMaterial({opacity: 0, transparent: true, visible: false}),
+                        .4, // high friction
+                        .8 // low restitution
+                    );
+                    physicsFloor = new Physijs.BoxMesh(
+                        new THREE.CubeGeometry(50, 3, 50),
+                        physicsFloorMaterial,
+                        0 // mass
+                    );
+                    scene.add( physicsFloor );
                     
                     
                     //Insert all of the tile sprites.

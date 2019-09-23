@@ -14,7 +14,7 @@ var boardGameCore = function(exportTarget, key){
                     netValue: data.mapData.modes[data.settings.mode].startMoney,
                     color: data.users[i].color,
                     shops: [],
-                    items: [{name: "Warp"}],
+                    items: [],
                     itemEffects: [],
                     setPieces: {
                         Peanut: 1
@@ -32,6 +32,8 @@ var boardGameCore = function(exportTarget, key){
                     });
                 }
                 players.push(player);
+                //TEMP
+                player.items.push(Object.assign(BG.c.items[6], {cost: 100, id: 6}));
             }
             return players;
         };
@@ -184,7 +186,6 @@ var boardGameCore = function(exportTarget, key){
                 for(let i = obj.children.length - 1; i >= 0; i--){
                     if(obj.children[i].material){
                         for(let j = obj.children[i].material.length - 1; j >= 0; j--){
-                            console.log(obj.children[i].material[j].name)
                             if(obj.children[i].material[j].name === name){
                                 if(set){
                                     obj.children[i].material[j] = set;
@@ -572,29 +573,29 @@ var boardGameCore = function(exportTarget, key){
                 }
             },
             makeCustomMenu: function(state, menu, props){
-                //BG.MenuController.removeMenus(state);
+                BG.MenuController.removeMenus(state);
                 //These are all custom menus,so do all of the "makeMenu" code here.
                 switch(menu){
                     case "investMenu":
+                        BG.MenuController.initializeNumberCycler(state, menu, props);
                         state.menus[0].data.shop = props.shop;
                         props.menu = menu;
-                        BG.MenuController.initializeNumberCycler(state, menu, props);
                         if(!BG.Utility.isServer()){
                             BG.Q.stageScene("investMenu", 2, props);
                         }
 
                         break;
                     case "upgradeMenu":
-                        state.menus[0].data.shop = props.shop;
                         BG.MenuController.initializeConfirmer(state, menu);
+                        state.menus[0].data.shop = props.shop;
                         if(!BG.Utility.isServer()){
                             BG.Q.stageScene("upgradeMenu", 2, props);
                         }
 
                         break;
                     case "auctionMenu":
-                        state.menus[0].data.shop = props.shop;
                         BG.MenuController.makeMenu(state, {menu: "auctionMenu", display: "dialogue"});
+                        state.menus[0].data.shop = props.shop;
                         if(!BG.Utility.isServer()){
                             BG.Q.stageScene("auctionMenu", 3, props);
                         }
@@ -876,7 +877,6 @@ var boardGameCore = function(exportTarget, key){
                         //Players bid until the timer goes down to 0. Bids set the timer to 5 seconds.
                         let players = state.turnOrder;
                         let shop = state.menus[0].data.shop;
-                        console.log(shop)
                         let valid = BG.MenuController.inputStates.auctionMenu.getValidParticipants(players, shop);
                         if(valid.length >= 1){
                             //TODO blind auction first. This is that with an extra step.
@@ -1006,7 +1006,7 @@ var boardGameCore = function(exportTarget, key){
                         if(player.money >= item.cost){
                             BG.GameController.purchaseItem(state, item, player.playerId);
                             let props = [
-                                {func: "purchaseItem", item: {id: item.id, cost: item.cost}}, 
+                                {func: "purchaseItem", item: item}, 
                                 {func: "clearStage", num: 2}
                             ];
                             let finish = BG.GameController.checkFinishMove(state, player);
@@ -1059,7 +1059,7 @@ var boardGameCore = function(exportTarget, key){
                             let extraDie = BG.GameController.getItemEffect(state, state.turnOrder[0], "Extra Die");
                             let rolls = 1 + (extraDie ? 1: 0);
                             let dieMin = 1; 
-                            let dieMax = 8;
+                            let dieMax = 6;
                             let roll = 0;
                             let rollsNums = [];
                             for(let i = 0; i < rolls; i++){
@@ -1985,9 +1985,9 @@ var boardGameCore = function(exportTarget, key){
             },
             processRollDieInput: function(state, inputs){
                 if(inputs.confirm){
-                    state.menus[0].data = {func: "playerMovement"};
-                    BG.GameController.allowPlayerMovement(state, state.currentMovementNum);
-                    return [{func: "stopDice", rollsNums: state.menus[0].data.rollsNums}, {func: "allowPlayerMovement", currentMovementNum: state.currentMovementNum}];
+                    let rollsNums = state.menus[0].data.rollsNums;
+                    BG.GameController.throwDice(state, state.currentMovementNum, rollsNums);
+                    return [{func: "throwDice", currentMovementNum: state.currentMovementNum, rollsNums: rollsNums}];
                 } else if(inputs.back){
                     if(state.menus[0].data.forceRoll){
                         return {func: "invalidAction"};
@@ -2061,50 +2061,58 @@ var boardGameCore = function(exportTarget, key){
                 //If we want to have items that have number of uses (block the next 3 shop fees, etc...), 
                 //a new property should be added called "uses" and it should be decreased on use.
                 //Right now, the items that last one time just get removed at the start of the user's next turn.
-
+                
+                
 
                 let player = state.turnOrder[0];
                 let item = player.items[itemIdx];
-                /* Delayed use items (add an item effect for activation later) */
-                /* 25% off Shop Coupon
-                 * 50% off Item Coupon
-                 * Extra Die
-                 * Double Turn
-                 * Invisible
-                 * Double Stock
-                 * Commision
-                 * Big Commision
-                 * Stock Stealer
-                 */
-                if(item.turns){
-                    let effect = {
-                        turns: item.turns,
-                        name: item.name
+                if(item.usable){
+                    /* Delayed use items (add an item effect for activation later) */
+                    /* Extra Die
+                     * Double Turn
+                     * Invisible
+                     * Double Stock
+                     * Commision
+                     * Big Commision
+                     * Stock Stealer
+                     */
+                    if(item.turns){
+                        let effect = {
+                            turns: item.turns,
+                            name: item.name
+                        };
+                        player.itemEffects.push(effect);
+                        BG.MenuController.makeMenu(state, {menu: "playerTurnMenu", selected: [0, 0], display: "menu"});
+                        if(!BG.Utility.isServer()){
+                            BG.AudioController.playSound("use-item");
+                        }
+                    } 
+
+                    /* Immediate use items (don't add an item effect) */
+                    /* Warp
+                     * Steal Set Piece
+                     * Thief
+                     * Steal Item
+                     * Bingo Player
+                     */
+                    else {
+                        switch(item.name){
+                            case "Warp":
+                                BG.MenuController.makeMoveShopSelector(state, "warpPlayerTo", false, player.loc, "all");
+                                break;
+                        }
+
                     };
-                    player.itemEffects.push(effect);
-                    BG.MenuController.makeMenu(state, {menu: "playerTurnMenu", selected: [0, 0], display: "menu"});
-                    if(!BG.Utility.isServer()){
-                        BG.AudioController.playSound("use-item");
-                    }
-                } 
 
-                /* Immediate use items (don't add an item effect) */
-                /* Warp
-                 * Steal Set Piece
-                 * Thief
-                 * Steal Item
-                 * Bingo Player
-                 */
-                else {
-                    switch(item.name){
-                        case "Warp":
-                            BG.MenuController.makeMoveShopSelector(state, "warpPlayerTo", false, player.loc, "all");
-                            break;
-                    }
-
-                };
-                player.items.splice(itemIdx, 1);
-                return {func: "useItem", itemIdx: itemIdx};
+                    player.items.splice(itemIdx, 1);
+                    return {func: "useItem", itemIdx: itemIdx};
+                } else {
+                    /* Non-usable items (Items that are prompted to use at a later time and not used from the menu)*/
+                    /* 25% off Shop Coupon
+                     * 50% off Item Coupon 
+                     */
+                     return {func: "invalidAction"};
+                }
             },
             purchaseSet: function(state, num, playerId){
                 let player = BG.GameController.getPlayer(state, playerId);
@@ -2188,19 +2196,17 @@ var boardGameCore = function(exportTarget, key){
             startRollingDie: function(state, rollsNums, player){
                 BG.Q.clearStage(2);
                 state.dice = [];
-                let space = 100;
                 let playerPos = BG.Utility.getXZ(player.p.loc);
                 let scene = BG.scene;
-                console.log(rollsNums)
                 for(let i = 0; i < rollsNums.length; i++){
                     let die = BG.GameController.createObject("Die", {
-                        x: 0,
-                        y: 0.3,
-                        z: 0
+                        x: playerPos.x + BG.c.tileW,
+                        y: 1.88,
+                        z: playerPos.z + BG.c.tileH
                     }, {roll: rollsNums[i]});
-                    //scene.add(die);
+                    scene.add(die);
                     state.dice.push(die);
-                    console.log(die)
+                    
                 }
                 function soundOn(){
                     if(state.dice.length && !state.currentMovementNum){
@@ -2218,9 +2224,6 @@ var boardGameCore = function(exportTarget, key){
                     state.dice = [];
                 }
             },
-            stopDice: function(state){
-                state.dice.forEach((die) => {die.stop();});
-            },
             playerMovement: function(state, inputs, id){
                 let obj = BG.MapController.processPlayerMovement(state, inputs, id);
                 if(obj.finish && !obj.passBy){
@@ -2229,13 +2232,18 @@ var boardGameCore = function(exportTarget, key){
                 }
                 return obj;
             },
-            allowPlayerMovement: function(state, num){
+            throwDice: function(state, num, rollsNums){
+                state.rollsNums = rollsNums;
                 state.currentMovementNum = num;
                 state.currentMovementPath = [BG.MapController.getTileAt(state, state.turnOrder[0].loc)];
+                state.menus[0].data = {func: "playerMovement"};
+                //On the client, show the throw dice animation and then allow movement.
                 if(!BG.Utility.isServer()){
-                    state.turnOrder[0].sprite.showMovementDirections();
                     BG.AudioController.stopSound("roll-die");
                     BG.AudioController.playSound("throw-die");
+                    state.diceFinished = 0;
+                    state.dice.forEach((die, i) => die.roll(rollsNums[i]));
+                    state.disableInputs = true;
                 }
             },
             checkFinishMove: function(state, player){
@@ -2336,39 +2344,6 @@ var boardGameCore = function(exportTarget, key){
             getPlayer: function(state, id){
                 return state.turnOrder.find(player => { return player.playerId === id;});
             },
-            setUpPlayers: function(data, mainTile){
-                let players = [];
-                for(let i = 0; i < data.users.length; i++){
-                    let player = {
-                        playerId: data.users[i].id,
-                        name: "Player " + data.users[i].id,
-                        loc: [6, 6],
-                        //loc: [mainTile.loc[0], mainTile.loc[1]],
-                        money: data.mapData.modes[data.settings.mode].startMoney,
-                        netValue: data.mapData.modes[data.settings.mode].startMoney,
-                        color: data.users[i].color,
-                        shops: [],
-                        items: [{name: "Warp"}],
-                        itemEffects: [],
-                        setPieces: {
-                            Peanut: 1
-                        },
-                        stocks: [],
-                        stockControl: 0,
-                        investments: [],
-                        rank: 1,
-                        maxItems: 1
-                        //Etc... Add more as I think of more. TODO
-                    };
-                    for(let j = 0; j < data.mapData.districts.length; j++){
-                        player.stocks.push({
-                            num: 0
-                        });
-                    }
-                    players.push(player);
-                }
-                return players;
-            },
             //Reduce the active turns for each item effect by 1. If the item is at 0, remove the effect.
             reduceItemTurns: function(player){
                 for(let i = player.itemEffects.length - 1; i >= 0; i--){
@@ -2414,25 +2389,17 @@ var boardGameCore = function(exportTarget, key){
                 BG.GameController.reduceItemTurns(player);
 
                 BG.preventMultipleInputs = true;
-                
                 if(!state.doIt){
-                    BG.GameController.buyShop(state, player, BG.MapController.getTileAt(state, [6, 4]), 1);
+                    //BG.GameController.buyShop(state, player, BG.MapController.getTileAt(state, [6, 4]), 1);
                     //BG.GameController.buyShop(state, state.turnOrder[0], BG.MapController.getTileAt(state, [6, 4]), 0)
                     //BG.GameController.buyStock(state.turnOrder[0], 10, state.map.districts[0].stockPrice * 10, state.map.districts[0]);
                     if(!BG.Utility.isServer()){
                         setTimeout(function(){
-                            BG.Q.inputs["down"] = true;
-                            setTimeout(function(){
-                                BG.Q.inputs["confirm"] = true;
-                                setTimeout(function(){
-                                    BG.Q.inputs["confirm"] = true;
-                                }, 100);
-                            }, 100);
+                            BG.Q.inputs["confirm"] = true;
                         }, 100);
                     }
                     state.doIt = true;
                 }
-                state.doIt = false;
                 
                 BG.MenuController.makeMenu(state, {menu: "playerTurnMenu", selected: [0, 0], display: "menu"});
                 if(BG.Utility.isActiveUser()){
@@ -2453,7 +2420,7 @@ var boardGameCore = function(exportTarget, key){
                 BG.GameController.adjustShopValues(state, player, shop);
                 player.shops.push(shop);
                 if(!BG.Utility.isServer()){
-                    shop.sprite.updateTile(player.color);
+                    shop.sprite.updateTile({type: "purchased", player: player});
                     BG.GameController.tileDetails.displayShop(shop);
                     BG.AudioController.playSound("purchase-item");
                 }
@@ -2464,7 +2431,7 @@ var boardGameCore = function(exportTarget, key){
                 BG.GameController.changePlayerMoney(player, -shop.value * 5);
                 BG.GameController.changePlayerNetValue(player, -shop.value * 4);
                 if(!BG.Utility.isServer()){
-                    shop.sprite.updateTile(player.color);
+                    shop.sprite.updateTile({type: "boughtOut", player: player, from: shop.ownedBy});
                     BG.AudioController.playSound("purchase-item");
                 }
                 shop.ownedBy.shops.splice(shop.ownedBy.shops.indexOf(shop), 1);
@@ -2489,11 +2456,11 @@ var boardGameCore = function(exportTarget, key){
                     shop.cost = BG.MapController.generateShopCost(shop.initialValue, shop.rank, shop.investedCapital, 1);
                     shop.maxCapital = BG.MapController.generateShopMaxCapital(shop.initialValue, shop.rank, shop.investedCapital);
                     if(!BG.Utility.isServer()){
-                        shop.sprite.updateTile();
+                        shop.sprite.updateTile({type: "sold", player: sellTo});
                     }
                 }
                 if(!BG.Utility.isServer()){
-                    BG.AudioController.playSound("purchase-item");
+                    //BG.AudioController.playSound("purchase-item");
                 }
             },
             //Changes the value of shops in the district based on the number that the player owns.
@@ -2504,7 +2471,7 @@ var boardGameCore = function(exportTarget, key){
                         shop.cost = BG.MapController.generateShopCost(shop.initialValue, shop.rank, shop.investedCapital, shopsOwned.length);
                         shop.maxCapital = BG.MapController.generateShopMaxCapital(shop.initialValue, shop.rank, shop.investedCapital);
                         if(!BG.Utility.isServer()){
-                            shop.sprite.updateTile(player.color);
+                            shop.sprite.updateTile({type: "value"});
                         }
                     });
                 }
@@ -2516,7 +2483,7 @@ var boardGameCore = function(exportTarget, key){
                 shop.cost = BG.MapController.generateShopCost(shop.initialValue, shop.rank, shop.investedCapital, shopsOwned);
                 shop.maxCapital = BG.MapController.generateShopMaxCapital(state.menus[0].data.shop.initialValue, state.menus[0].data.shop.rank, state.menus[0].data.shop.investedCapital);
                 if(!BG.Utility.isServer()){
-                    shop.sprite.updateTile(shop.ownedBy.color);
+                    shop.sprite.updateTile({type: "value"});
                     BG.GameController.tileDetails.displayShop(shop);
                 }
             },
@@ -2588,36 +2555,92 @@ var boardGameCore = function(exportTarget, key){
                     this.position.z = pos.z + BG.c.tileH;
                     BG.camera.moveTo({obj: this, zOffset: 4});
                 };
-                object.addEventListener("moneyChanged", function(){
-                    console.log("moneyChnaged!");
-                });
-                object.addEventListener("netValueChanged", function(){
-                    console.log("NVChanged!");
-                });
                 object.initialize();
                 return object;
             },
             Die: function(position, props){
-                let object = {position: {}};//BG.ObjectData["die.obj"].clone();
-                object.p = props;
-                object.initialize = function(){
-                    this.position.x = position.x;
-                    this.position.y = position.y;
-                    this.position.z = position.z;
+                function initialize(pos, p){
+                    let visual = BG.ObjectData["die.obj"].clone();
+                    let obj = new Physijs.BoxMesh(
+                        visual.children[0].geometry,
+                        visual.children[0].material
+                    );
+                    obj.position.set(pos.x, pos.y, pos.z);
+                    obj.p = p;
+                    return obj;
                 };
+                let object = initialize(position, props);
                 //Shuffle the die
                 object.animate = function(){
                     
                 };
-                //Do the stopping animation (throw in the air and land on the correct number)
-                object.stop = function(){
+                //Throw the die
+                object.roll = function(num){
+                    let rollsPhysics = {
+                        1: [
+                            [0.09308455553947596, 0.039127131442402076, 0.025334880255568536],
+                            [0.043814017026984196, 0.057013101212549544, 0.03949256561541477],
+                            [0.04128835460619238, 0.030169001324348233, 0.0879609080801282]
+                        ],
+                        2: [
+                            [0.06079496819689227, 0.08587294537350432, 0.03242592902200736],
+                            [0.021426631894882142, 0.08602279104036434, 0.0482834049250835],
+                            [0.08690277427310537, 0.04426811639491186, 0.08961960423154858]
+                        ],
+                        3: [
+                            [0.07681349373802812, 0.041178994488635226, 0.00949560056909784],
+                            [0.06414543610242884, 0.05940693124196741, 0.02383788829407596],
+                            [0.06604212359189054, 0.04053697655527773, 0.029725450408243016]
+                        ],
+                        4: [
+                            [0.0892888826226536, 0.04155870096641372, 0.0050714553356242306],
+                            [0.085532533703079, 0.023707228088409926, 0.06849390608804565],
+                            [0.04623770158622402, 0.06561972514753216, 0.0424069373485477]
+                        ],
+                        5: [
+                            [0.0025440679086278896, 0.05390833510660427, 0.05293093971023266],
+                            [0.006321399375469694, 0.04821195204739805, 0.05156987827613611],
+                            [0.005818885108297289, 0.06386366077875887, 0.05177123737819047]
+                        ],
+                        6: [
+                            [0.032985061885791624, 0.06754718678958953, 0.026898750489373936],
+                            [0.03352264924810844, 0.09858700314992486, 0.049112568238820466],
+                            [0.0462565294078507, 0.03557387884596559, 0.06719235784697022]
+                        ]
+                    };
                     
+                    
+                    let force = new THREE.Vector3(0, 7, -1);
+                    
+                    /*let offsetX = Math.random() / 10;
+                    let offsetY = Math.random() / 10;
+                    let offsetZ = Math.random() / 10;
+                    console.log("[" + offsetX + ", " + offsetY + ", " + offsetZ + "]")*/
+                    let offsets = rollsPhysics[num][~~Math.random() * rollsPhysics[num].length];
+                    let offset = new THREE.Vector3(offsets[0], offsets[1], offsets[2]);
+                    this.applyImpulse(force, offset);
+                    function checkForStopped(){
+                        var epsilon = 0.0001; // or any small enough value for your purposes
+                        if ( object.getLinearVelocity().lengthSq() < epsilon &&
+                            object.getAngularVelocity().lengthSq() < epsilon ) {
+                            BG.state.diceFinished++;
+                            if(BG.state.diceFinished === BG.state.rollsNums.length){
+                                BG.state.turnOrder[0].sprite.showMovementDirections();
+                                BG.state.disableInputs = false;
+                                BG.scene.removeEventListener('update', checkForStopped);  
+                            }
+                        }
+                    }
+                    //Figure out if the die has stopped (it will surely take longer than 200ms)
+                    //This is check for this frame (when the velocity is still 0), which is why it needed to be offset.
+                    setTimeout(function(){
+                        BG.scene.addEventListener('update', checkForStopped);  
+                    }, 200);
                 };
                 //Gets rid of this die.
                 object.remove = function(){
-                    
+                    BG.scene.remove(this);
                 };
-                object.initialize();
                 return object;
             },
             Tile: function(position, props){
@@ -2656,7 +2679,7 @@ var boardGameCore = function(exportTarget, key){
                     this.tileStructure.castShadow = true;
                     this.tileStructure.reveiveShadow = true;
                 };
-                object.addObject = function(type){
+                object.addObject = function(type, props){
                     switch(type){
                         case "signpost":
                             var signpost = BG.ObjectData["signpost.obj"].clone();
@@ -2666,7 +2689,7 @@ var boardGameCore = function(exportTarget, key){
                             this.tileStructure.add(signpost);
                             this.valueText = BG.DisplayController.createText({
                                 color: 0x000000,
-                                message: "" + this.p.value, 
+                                message: "" + props.value, 
                                 drawFrom: "middle",
                                 size: 0.3,
                                 position: {
@@ -2684,9 +2707,10 @@ var boardGameCore = function(exportTarget, key){
                             building.position.z -= BG.c.tileH / 4;
                             building.name = "shop-building";
                             this.tileStructure.add(building);
+                            
                             this.valueText = BG.DisplayController.createText({
                                 color: 0xFFFFFF,
-                                message: "" + this.p.cost, 
+                                message: "" + props.value, 
                                 drawFrom: "middle",
                                 size: 0.3,
                                 position: {
@@ -2704,27 +2728,8 @@ var boardGameCore = function(exportTarget, key){
                     let type = object.p.type;
                     switch(type){
                         case "shop":
-                            this.addObject("signpost");
-                            
-                            
-                            /*
-                            this is for if the player owns it already. This will only happen if the player owns a shop from the start.
-                            var building = BG.ObjectData["shop-" + props.rank + ".obj"].clone();
-                            building.position.y = 0.1;
-                            building.position.z -= BG.c.tileH / 4;
-                            object.tileStructure.add(building);
-                            
-                            object.tileStructure.add(BG.DisplayController.createText({
-                                 color: 0x000000,
-                                 message: ""+props.value, 
-                                 drawFrom: "right",
-                                 size: 0.3,
-                                 position: {
-                                     x: BG.c.tileW / 1.2, 
-                                     y: 0.11,
-                                     z: BG.c.tileH / 1.2
-                                 }
-                            }) );*/
+                            this.addObject("signpost", {value: this.p.value});
+                            //TODO: if the player already owns a shop when the game start (maybe this won't happen).
                             
                             break;
                         //Vendor gets an image of the product.
@@ -2777,17 +2782,27 @@ var boardGameCore = function(exportTarget, key){
                             break;
                     }    
                 };
-                object.updateTile = function(color){
-                    if(!color){
-                        this.remove(this.valueText);
-                        this.addObject("signpost");
-                        this.tileStructure.remove(this.tileStructure.getObjectByName("shop-building"));
-                        this.color = "lightgrey";
-                    } else {
-                        this.addObject("shop-building");
-                        this.tileStructure.remove(this.tileStructure.getObjectByName("signpost"));
-                        this.color = color;
-                        BG.Utility.updateMaterial(this.tileStructure, "Main", new THREE.MeshStandardMaterial( { color: this.color} ));
+                object.updateTile = function(props){
+                    switch(props.type){
+                        case "purchased":
+                            this.addObject("shop-building", {value: this.p.cost, rank: this.p.rank});
+                            this.tileStructure.remove(this.tileStructure.getObjectByName("signpost"));
+                            this.color = props.player.color;
+                            BG.Utility.updateMaterial(this.tileStructure, "Main", new THREE.MeshStandardMaterial( { color: this.color} ));
+                            break;
+                        case "sold":
+                            this.remove(this.valueText);
+                            this.addObject("signpost", {value: this.p.value});
+                            this.tileStructure.remove(this.tileStructure.getObjectByName("shop-building"));
+                            this.color = "teal";
+                            BG.Utility.updateMaterial(this.tileStructure, "Main", new THREE.MeshStandardMaterial( { color: this.color} ));
+                            break;
+                        case "boughtOut":
+                            
+                            break;
+                        case "value":
+                            this.valueText.geometry = BG.DisplayController.generateTextGeometry({message: "" + this.p.cost, size: 0.3, drawFrom: "middle"});
+                            break;
                     }
                 };
                 object.initialize();

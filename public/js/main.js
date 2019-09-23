@@ -1,6 +1,7 @@
 $(function(){
     require(['socket.io/socket.io.js']);
-    //asdasdasdasd
+    
+    
     let BG = window.BG = new BoardGame();
     let socket = io.connect();
     BG.socket = socket;
@@ -239,11 +240,8 @@ $(function(){
                         case "landOnMainTile":
                             BG.GameController.landOnMainTile(state, player);
                             break;
-                        case "stopDice":
-                            BG.GameController.stopDice(state, r.rollsNums);
-                            break;
-                        case "allowPlayerMovement":
-                            BG.GameController.allowPlayerMovement(state, r.currentMovementNum);
+                        case "throwDice":
+                            BG.GameController.throwDice(state, r.currentMovementNum, r.rollsNums);
                             break;
                         case "playerMovement":
                             var tile = BG.MapController.getTileAt(state, r.loc);
