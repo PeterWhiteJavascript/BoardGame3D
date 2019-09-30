@@ -247,12 +247,12 @@ $(function(){
                             var tile = BG.MapController.getTileAt(state, r.loc);
                             BG.GameController.removeDice(state);
                             BG.GameController.tileDetails.displayShop(tile);
-
                             if(r.direction === "forward"){
-                                BG.GameController.movePlayer(player, tile);
                                 state.currentMovementPath.push(tile);
                                 player.tileTo = tile;
                                 player.finish = r.finish;
+                                player.sprite.finish = r.finish;
+                                BG.GameController.movePlayer(player, tile);
                                 BG.MapController.checkPassByTile(state, player);
                             } else if(r.direction === "back"){
                                 BG.GameController.playerGoBackMove(state, player.playerId);
@@ -264,8 +264,8 @@ $(function(){
                         case "playerGoBackMove":
                             BG.Q.clearStage(2);
                             r.func = "playerMovement";
-                            player.sprite.showMovementDirections();
                             BG.GameController.playerGoBackMove(state, player.playerId);
+                            player.sprite.showMovementDirections();
                             break;
                         case "purchaseSet":
                             BG.GameController.purchaseSet(state, r.num, player.playerId);

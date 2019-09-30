@@ -170,8 +170,7 @@ let clientSide = function(){
                     scene.simulate();
                 }
                 function setupThreeJS() {
-                    //BG.scene = scene = new THREE.Scene();
-                    BG.scene = scene = new Physijs.Scene({fixedTimeStep: 1 / 120})
+                    BG.scene = scene = new Physijs.Scene({fixedTimeStep: 1 / 120});
                     scene.setGravity(new THREE.Vector3( 0, -30, 0 ));
                     scene.addEventListener(
                         'update',

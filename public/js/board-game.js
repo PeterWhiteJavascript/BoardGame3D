@@ -8,7 +8,7 @@ var boardGameCore = function(exportTarget, key){
                 let player = {
                     playerId: data.users[i].id,
                     name: "Player " + data.users[i].id,
-                    loc: [6, 6],
+                    loc: [12, 4],
                     //loc: [mainTile.loc[0], mainTile.loc[1]],
                     money: data.mapData.modes[data.settings.mode].startMoney,
                     netValue: data.mapData.modes[data.settings.mode].startMoney,
@@ -304,10 +304,10 @@ var boardGameCore = function(exportTarget, key){
                         }
                     }
                     if(!props.direction) return false;
-                    BG.GameController.movePlayer(player, tileTo);
-
                     props.finish = state.currentMovementPath.length === state.currentMovementNum + 1;
                     player.finish = props.finish;
+                    BG.GameController.movePlayer(player, tileTo);
+
                     if(props.direction === "forward"){
                         if(BG.MapController.checkPassByTile(state, player)){
                             props.passBy = true;
@@ -2243,7 +2243,10 @@ var boardGameCore = function(exportTarget, key){
                     BG.AudioController.playSound("throw-die");
                     state.diceFinished = 0;
                     state.dice.forEach((die, i) => die.roll(rollsNums[i]));
-                    state.disableInputs = true;
+                    //state.disableInputs = true;
+                    state.disableInputs = false; //TEMP to skip animation of dice
+                    state.counter = BG.GameController.createObject("MoveCounter", state.turnOrder[0].sprite.position, {state: BG.state, roll: state.currentMovementNum});//TEMP to add the counter right away.
+                    BG.scene.add(state.counter);
                 }
             },
             checkFinishMove: function(state, player){
@@ -2321,13 +2324,15 @@ var boardGameCore = function(exportTarget, key){
             },
             playerGoBackMove: function(state, id){
                 let player = this.getPlayer(state, id);
+                player.finish = false;
                 state.currentMovementPath.pop();
                 let tileTo = state.currentMovementPath[state.currentMovementPath.length - 1];
-                BG.GameController.movePlayer(player, tileTo);
-                BG.MapController.checkResetPassByTile(state, tileTo);
                 if(!BG.Utility.isServer()){
+                    player.sprite.finish = false;
                     BG.GameController.tileDetails.displayShop(tileTo);
                 }
+                BG.GameController.movePlayer(player, tileTo);
+                BG.MapController.checkResetPassByTile(state, tileTo);
                 return tileTo.loc;
             },  
             //When the player steps onto the last tile of the movement
@@ -2338,6 +2343,13 @@ var boardGameCore = function(exportTarget, key){
                 player.loc = tileTo.loc;
                 if(!BG.Utility.isServer()){
                     player.sprite.moveTo(tileTo.loc);
+                    if(!player.sprite.finish){
+                        BG.state.counter.visible = true;
+                        BG.state.counter.updateRoll(player.sprite.position, BG.state.currentMovementNum - (BG.state.currentMovementPath.length - 1));
+                    } else {
+                        BG.state.counter.visible = false;
+                    }
+                    
                     BG.AudioController.playSound("step-on-tile");
                 }
             },
@@ -2357,6 +2369,10 @@ var boardGameCore = function(exportTarget, key){
             },
             //Functions that happen when the current player ends the turn
             endTurn: function(state){
+                if(!BG.Utility.isServer()){
+                    if(BG.state.counter) BG.scene.remove(BG.state.counter);
+                    
+                }
                 //If the player doesn't have any ready cash at the end of his turn, force him to sell shops or stocks.
                 //Once he's above 0, run this endTurn function again and it'll go past this.
                 if(state.turnOrder[0].money < 0){
@@ -2389,7 +2405,7 @@ var boardGameCore = function(exportTarget, key){
                 BG.GameController.reduceItemTurns(player);
 
                 BG.preventMultipleInputs = true;
-                if(!state.doIt){
+                /*if(!state.doIt){
                     //BG.GameController.buyShop(state, player, BG.MapController.getTileAt(state, [6, 4]), 1);
                     //BG.GameController.buyShop(state, state.turnOrder[0], BG.MapController.getTileAt(state, [6, 4]), 0)
                     //BG.GameController.buyStock(state.turnOrder[0], 10, state.map.districts[0].stockPrice * 10, state.map.districts[0]);
@@ -2399,7 +2415,7 @@ var boardGameCore = function(exportTarget, key){
                         }, 100);
                     }
                     state.doIt = true;
-                }
+                }*/
                 
                 BG.MenuController.makeMenu(state, {menu: "playerTurnMenu", selected: [0, 0], display: "menu"});
                 if(BG.Utility.isActiveUser()){
@@ -2543,9 +2559,50 @@ var boardGameCore = function(exportTarget, key){
                     this.position.x = position.x;
                     this.position.y = position.y;
                     this.position.z = position.z;
+                    this.directionArrows = [];
                 };
                 //Shows which way the player can move from a tile.
                 object.showMovementDirections = function(){
+                    this.p.allowMovement = true;
+                    
+                    let lastTile = BG.state.currentMovementPath[BG.state.currentMovementPath.length - 2];
+                    console.log(BG.state.currentMovementPath)
+                    let tileOn = BG.MapController.getTileAt(BG.state, this.p.loc);
+                    let dirs = tileOn.dirs ? tileOn.dirs.slice() : Object.keys(tileOn.dir);
+                    //Force the player to continue along the path that they were on from last turn.
+                    if(BG.state.currentMovementPath.length <= 1) {
+                        let lastTile = BG.state.turnOrder[0].lastTile;
+                        if(lastTile){
+                            dirs.forEach((dir, i) => {
+                                let loc = BG.Utility.convertDirToCoord(dir);
+                                if(tileOn.loc[0] + loc[0] === lastTile.loc[0] && tileOn.loc[1] + loc[1] === lastTile.loc[1]) dirs.splice(i, 1);
+                            });
+                        }
+                    }
+                    //Check all potential tiles and make sure that if any of them are one-way, don't allow this tile to go there.
+                    for(let i = dirs.length -1; i >= 0; i--){
+                        let dir = dirs[i];
+                        let tile = tileOn.dir[dir];
+                        if(tile && (!lastTile || !BG.Utility.locsMatch(lastTile.loc, tile.loc))){
+                            let toDir = BG.Utility.convertCoordToDir(BG.Utility.compareLocsForDirection(tile.loc, tileOn.loc));
+                            if(tile.dirs && tile.dirs.includes(toDir)){
+                                dirs.splice(i, 1);
+                            }
+                        }
+                    }
+                    //Allow going back if it's the last tile
+                    if(tileOn.dirs){
+                        if(lastTile){
+                            console.log(BG.state.currentMovementPath, tileOn.loc, lastTile.loc)
+                            let allowDir = BG.Utility.convertCoordToDir(BG.Utility.compareLocsForDirection(tileOn.loc, lastTile.loc));
+                            dirs.push(allowDir);
+                        }
+                    }
+                    for(let i = 0; i < dirs.length; i++){
+                        let arrow = BG.GameController.createObject("DirectionArrow", this.position, {state: BG.state, dir: dirs[i]});
+                        BG.scene.add(arrow);
+                        this.directionArrows.push(arrow);
+                    }
                     
                 };
                 //Moves the player to a certain location.
@@ -2554,8 +2611,61 @@ var boardGameCore = function(exportTarget, key){
                     this.position.x = pos.x + BG.c.tileW;
                     this.position.z = pos.z + BG.c.tileH;
                     BG.camera.moveTo({obj: this, zOffset: 4});
+                    this.directionArrows.forEach((arrow) => arrow.remove());
+                    this.directionArrows = [];
+                    if(!this.finish){
+                        this.showMovementDirections();
+                    }
                 };
                 object.initialize();
+                return object;
+            },
+            DirectionArrow: function(position, props){
+                let object = BG.ObjectData["direction-arrow.obj"].clone();
+                object.position.x = position.x;
+                object.position.y = position.y + 2;
+                object.position.z = position.z;
+                switch(props.dir){
+                    case "up":
+                        object.position.z -= 0.25;
+                        object.rotation.y = Math.PI;
+                        break;
+                    case "right":
+                        object.position.z += 0.5;
+                        object.position.x += 0.75;
+                        object.rotation.y = Math.PI * 0.5;
+                        break;
+                    case "down":
+                        object.position.z += 1.25;
+                        break;
+                    case "left":
+                        object.position.z += 0.5;
+                        object.position.x -= 0.75;
+                        object.rotation.y = Math.PI * 1.5;
+                        break;
+                }
+                object.remove = function(){
+                    BG.scene.remove(this);
+                };
+                return object;
+            },
+            //Displays the current roll and counts down or up based on if the player moved forward or backward.
+            MoveCounter: function(position, props){
+                let object = BG.DisplayController.createText({
+                    color: 0x000000,
+                    message: "" + props.roll, 
+                    drawFrom: "middle",
+                    size: 1,
+                    position: {
+                        x: position.x,
+                        y: position.y + 3,
+                        z: position.z
+                    }
+                });
+                object.updateRoll = function(position, roll){
+                    this.position.set(position.x, position.y + 3, position.z);
+                    this.geometry = BG.DisplayController.generateTextGeometry({message: "" + roll, size: 1, drawFrom: "middle"});
+                };
                 return object;
             },
             Die: function(position, props){
