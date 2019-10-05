@@ -21,11 +21,10 @@
         {
             "x": 2,
             "y": 2,
-            "value": 220,
-            "rank": 2,
-            "name": "Butcher",
-            "type": "shop",
-            "district": 0
+            "name": "Warp",
+            "type": "warp",
+            "image": "blue-warp.jpg",
+            "exit":[6, 2]
         },
         {
             "x": 4,
@@ -39,11 +38,10 @@
         {
             "x": 6,
             "y": 2,
-            "value": 300,
-            "rank": 2,
-            "name": "Clothing Store",
-            "type": "shop",
-            "district": 0
+            "name": "Warp",
+            "type": "warp",
+            "image": "blue-warp.jpg",
+            "exit":[2, 2]
         },
         {
             "x": 6,
@@ -57,16 +55,16 @@
         {
             "x": 6,
             "y": 6,
+            "image": "main-tile.png",
+            "name": "Home",
             "type": "main"
         },
         {
             "x": 6,
             "y": 8,
-            "value": 600,
-            "rank": 1,
-            "name": "Paint Shop",
-            "type": "shop",
-            "district": 1
+            "image": "toll.jpg",
+            "name": "Toll Booth",
+            "type": "toll"
         },
         {
             "x": 0,
@@ -237,32 +235,27 @@
         {
             "x": 6,
             "y": 0,
-            "value": 50,
-            "rank": 1,
-            "name": "Street Shop 10",
-            "type": "shop",
-            "district": 3
+            "image": "roll-again.jpg",
+            "name": "Extra Roll",
+            "type": "roll-again"
+                
         }
     ],
     "districts": [
         {
             "color": "pink",
-            "numShops": 5,
             "stockPrice": 10
         },
         {
             "color": "blue",
-            "numShops": 7,
             "stockPrice": 10
         },
         {
             "color": "green",
-            "numShops": 4,
             "stockPrice": 10
         },
         {
             "color": "red",
-            "numShops": 4,
             "stockPrice": 10
         }
     ],

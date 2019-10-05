@@ -9,11 +9,6 @@
     "boxHeight": 220,
     "tileOffset": 0.3,
     "colors": ["blue", "red", "yellow", "green", "cyan", "teal", "brown", "orange", "gold", "purple"],
-    "vendorText": {
-        "Peanut":["Want a peanut? \nIt'll only cost you peanuts hahaha!"],
-        "Almond":["Fresh almonds here. \nThey're pretty cheap I guess."],
-        "Cashew":["These cashews are the real deal. \nAre you gonna pay up?"]
-    },
     "items": {
         "0":{
             "name": "25% off Shop Coupon",

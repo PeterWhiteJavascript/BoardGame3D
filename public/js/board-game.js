@@ -8,7 +8,7 @@ var boardGameCore = function(exportTarget, key){
                 let player = {
                     playerId: data.users[i].id,
                     name: "Player " + data.users[i].id,
-                    loc: [12, 4],
+                    loc: [31, 18],
                     //loc: [mainTile.loc[0], mainTile.loc[1]],
                     money: data.mapData.modes[data.settings.mode].startMoney,
                     netValue: data.mapData.modes[data.settings.mode].startMoney,
@@ -41,6 +41,10 @@ var boardGameCore = function(exportTarget, key){
             let state = {};
             state.map = BG.MapController.generateMap(data.mapData, data.settings);
             state.players = BG.setUpPlayers(data, state.map.mainTile);
+            //Bonus pool is a pool that gets added after sales/other events. When a player cashes in a set, they get the bonus.
+            state.bonusPool = 0;
+            state.turn = 1;
+            state.round = 1;
             state.menus = [];
             state.dice = [];
             //Only generate random numbers on the server.
@@ -83,13 +87,14 @@ var boardGameCore = function(exportTarget, key){
                 let difX = loc1[0] - loc2[0];
                 let difY = loc1[1] - loc2[1];
                 let dir;
-                if(difX !== 0){
+                if(difX > 1 || difX < -1){
                     if(difX < 0) dir = [2, 0];
                     else dir = [-2, 0];
                 } else {
                     if(difY < 0) dir = [0, 2];
                     else dir = [0, -2];
                 }
+                console.log(difX, difY)
                 return dir;
             },
             getDeepValue: function(obj, path){
@@ -242,7 +247,7 @@ var boardGameCore = function(exportTarget, key){
                         }
                         BG.MenuController.makeMenu(state, {
                             menu: "askVendorBuyItem",
-                            text: BG.c.vendorText[tile.itemName], 
+                            text: tile.text, 
                             display: "dialogue"
                         });
                         return true;
@@ -250,6 +255,15 @@ var boardGameCore = function(exportTarget, key){
                         state.tileTo = tile;
                         BG.MenuController.makeMenu(state, {menu: "askIfWantToBuyItem", display: "dialogue"});
                         return true;
+                    case "toll":
+                        let addMove = 1;
+                        BG.GameController.addBoardAction(state, "prev", "addMovementNum", [state], [addMove]);
+                        
+                        //Pay the toll.
+                        let tollAmount = state.round * 5;
+                        BG.GameController.addBoardAction(state, "prev", "changePlayerMoney", [player], [-tollAmount]);
+                        BG.GameController.addBoardAction(state, "prev", "changeBonusPool", [state], [tollAmount]);
+                        break;
                 }
             },
             //Run when the player presses a directional input while moving their dice roll.
@@ -304,8 +318,6 @@ var boardGameCore = function(exportTarget, key){
                         }
                     }
                     if(!props.direction) return false;
-                    props.finish = state.currentMovementPath.length === state.currentMovementNum + 1;
-                    player.finish = props.finish;
                     BG.GameController.movePlayer(player, tileTo);
 
                     if(props.direction === "forward"){
@@ -404,15 +416,32 @@ var boardGameCore = function(exportTarget, key){
                             break;
                         case "main":
                             map.mainTile = tile;
+                            tile.name = data.name;
+                            tile.image = data.image;
                             break;
                         case "vendor":
+                            tile.name = data.name;
                             tile.itemName = data.item;
                             tile.itemCost = mapData.setPieces[tile.itemName] * data.price;
+                            tile.text = data.text;
                             break;
                         case "itemshop":
                             tile.items = data.items.map((item) =>{
                                 return Object.assign(BG.c.items[item[0]], {cost: item[1], id: item[0]});
                             });
+                            break;
+                        case "warp":
+                            tile.exit = data.exit;
+                            tile.name = data.name;
+                            tile.image = data.image;
+                            break;
+                        case "toll":
+                            tile.name = data.name;
+                            tile.image = data.image;
+                            break;
+                        case "roll-again":
+                            tile.name = data.name;
+                            tile.image = data.image;
                             break;
                     }
                     return tile;
@@ -1065,6 +1094,7 @@ var boardGameCore = function(exportTarget, key){
                             for(let i = 0; i < rolls; i++){
                                 let num = ~~(state.random() * (dieMax + 1 - dieMin)) + dieMin;
                                 roll += num;
+                                
                                 rollsNums.push(num);
                             }
                             state.currentMovementNum = roll;
@@ -2003,9 +2033,19 @@ var boardGameCore = function(exportTarget, key){
             }
         };
         BG.GameController = {
-            addBoardAction: function(state, tile, action, props){
+            addBoardAction: function(state, tile, action, props, reverse){
+                //Do the initial action
+                BG.GameController[action](...props.concat(reverse));
+                //If the effect is done when going to the tile before this one.
                 if(tile === "prev") tile = state.currentMovementPath[state.currentMovementPath.length - 2];
-                state.currentBoardActions.push([tile, action, props]);
+                //Add the action to the list.
+                state.currentBoardActions.push([tile, action, props.concat(reverse.map((p) => {return -p;}))]);
+            },
+            addMovementNum: function(state, num){
+                state.currentMovementNum += num;
+            },
+            movementIsFinished: function(state){
+                return state.currentMovementPath.length === state.currentMovementNum + 1
             },
             getItemEffect: function(state, player, effect){
                 return player.itemEffects.filter((e) => {
@@ -2017,15 +2057,15 @@ var boardGameCore = function(exportTarget, key){
                     return itm.id === itemIdx;
                 });
             },
-            warpPlayerTo: function(state, player, tileTo){
+            warpPlayerTo: function(state, player, tileTo, subdueConfirmMove){
                 player.loc = tileTo.loc;
                 player.tileTo = tileTo;
                 state.currentMovementPath = [];
-                player.finish = true;
                 player.skipFinish = true;
                 if(!BG.Utility.isServer()){
                     player.sprite.moveTo(tileTo.loc);
                 }
+                if(subdueConfirmMove) return {func: "warpPlayerTo", loc: tileTo.loc, subdue: subdueConfirmMove};
                 let props = {
                     func: "playerMovement",
                     loc: tileTo.loc,
@@ -2118,40 +2158,34 @@ var boardGameCore = function(exportTarget, key){
                 let player = BG.GameController.getPlayer(state, playerId);
                 let sets = BG.GameController.getCompleteSets(state, player);
                 let set = sets[num];
-                BG.GameController.changePlayerMoney(player, set.value);
-                BG.GameController.addBoardAction(state, "prev", "changePlayerMoney", [player, -set.value]);
-                BG.GameController.changePlayerNetValue(player, set.value);
-                BG.GameController.addBoardAction(state, "prev", "changePlayerNetValue", [player, -set.value]);
+                let bonus = state.bonusPool;
+                let amount = set.value + bonus;
+                
+                BG.GameController.addBoardAction(state, "prev", "changePlayerMoney", [player], [amount]);
+                BG.GameController.addBoardAction(state, "prev", "changePlayerNetValue", [player], [amount]);
                 set.items.forEach((item) => {
-                    BG.GameController.changeSetItemQuantity(player, item, -1);
-                    BG.GameController.addBoardAction(state, "prev", "changeSetItemQuantity", [player, item, 1]);
+                    BG.GameController.addBoardAction(state, "prev", "changeSetItemQuantity", [player, item], [-1]);
                 });
-                BG.GameController.changePlayerRank(state, player, 1);
-                BG.GameController.addBoardAction(state, "prev", "changePlayerRank", [player, -1]);
+                BG.GameController.addBoardAction(state, "prev", "changePlayerRank", [player], [1]);
+                BG.GameController.addBoardAction(state, "prev", "changeBonusPool", [player], [-bonus]);
 
             },
             purchaseSetItem: function(state, tileLoc, playerId){
                 let tile = BG.MapController.getTileAt(state, tileLoc);
                 let player = BG.GameController.getPlayer(state, playerId);
-                BG.GameController.changePlayerMoney(player, -tile.itemCost);
-                BG.GameController.addBoardAction(state, "prev", "changePlayerMoney", [player, tile.itemCost]);
-                BG.GameController.changeSetItemQuantity(player, tile.itemName, 1);
-                BG.GameController.addBoardAction(state, "prev", "changeSetItemQuantity", [player, tile.itemName, -1]);
-                BG.GameController.changePlayerNetValue(player, -tile.itemCost);
-                BG.GameController.addBoardAction(state, "prev", "changePlayerNetValue", [player, tile.itemCost]);
+                BG.GameController.addBoardAction(state, "prev", "changePlayerMoney", [player], [-tile.itemCost]);
+                BG.GameController.addBoardAction(state, "prev", "changeSetItemQuantity", [player, tile.itemName], [1]);
+                BG.GameController.addBoardAction(state, "prev", "changePlayerNetValue", [player], [-tile.itemCost]);
 
             },
             purchaseItem: function(state, item, playerId){
                 let player = BG.GameController.getPlayer(state, playerId);
-                BG.GameController.changePlayerItem(player, item, true);
-                BG.GameController.addBoardAction(state, "prev", "changePlayerItem", [player, item]);
-                BG.GameController.changePlayerMoney(player, -item.cost);
-                BG.GameController.addBoardAction(state, "prev", "changePlayerMoney", [player, item.cost]);
-                BG.GameController.changePlayerNetValue(player, -item.cost);
-                BG.GameController.addBoardAction(state, "prev", "changePlayerNetValue", [player, item.cost]);
+                BG.GameController.addBoardAction(state, "prev", "changePlayerItem", [player, item], [1]);
+                BG.GameController.addBoardAction(state, "prev", "changePlayerMoney", [player], [-item.cost]);
+                BG.GameController.addBoardAction(state, "prev", "changePlayerNetValue", [player], [-item.cost]);
             },
             changePlayerItem: function(player, item, add){
-                if(add){
+                if(add > 0){
                     player.items.push(item);
                 } else {
                     player.items.splice(player.items.indexOf(item), 1);
@@ -2166,6 +2200,9 @@ var boardGameCore = function(exportTarget, key){
                 district.stockAvailable += num;
                 player.stocks[district.id].num -= num;
                 BG.GameController.changePlayerMoney(player, price);
+            },
+            changeBonusPool: function(state, amount){
+                state.bonusPool += amount;
             },
             changePlayerRank: function(player, rank){
                 player.rank += rank;
@@ -2201,7 +2238,7 @@ var boardGameCore = function(exportTarget, key){
                 for(let i = 0; i < rollsNums.length; i++){
                     let die = BG.GameController.createObject("Die", {
                         x: playerPos.x + BG.c.tileW,
-                        y: 1.88,
+                        y: 2.88,
                         z: playerPos.z + BG.c.tileH
                     }, {roll: rollsNums[i]});
                     scene.add(die);
@@ -2226,6 +2263,7 @@ var boardGameCore = function(exportTarget, key){
             },
             playerMovement: function(state, inputs, id){
                 let obj = BG.MapController.processPlayerMovement(state, inputs, id);
+                obj.finish = BG.GameController.movementIsFinished(state);
                 if(obj.finish && !obj.passBy){
                     BG.GameController.askFinishMove(state, BG.GameController.getPlayer(state, id));
                     obj = [obj, {func: "removeItem", item: "moveArrows"}];
@@ -2250,7 +2288,7 @@ var boardGameCore = function(exportTarget, key){
                 }
             },
             checkFinishMove: function(state, player){
-                let finish = player.finish;
+                let finish = BG.GameController.movementIsFinished(state);
                 let skipFinish = player.skipFinish;
                 if(skipFinish){
                     return BG.GameController.playerConfirmMove(state, player.playerId);
@@ -2261,10 +2299,16 @@ var boardGameCore = function(exportTarget, key){
                 }
             },
             payOwnerOfShop: function(state, player, tileOn){
-                BG.GameController.changePlayerMoney(player, -tileOn.cost);
-                BG.GameController.changePlayerNetValue(player, -tileOn.cost);
-                BG.GameController.changePlayerMoney(tileOn.ownedBy, tileOn.cost);
-                BG.GameController.changePlayerNetValue(tileOn.ownedBy, tileOn.cost);
+                let totalAmount = tileOn.cost;
+                let tax = totalAmount * (tileOn.rank * 0.01);
+                let amount = totalAmount - tax;
+                
+                BG.GameController.changePlayerMoney(player, -totalAmount);
+                BG.GameController.changePlayerNetValue(player, -totalAmount);
+                BG.GameController.changePlayerMoney(tileOn.ownedBy, amount);
+                BG.GameController.changePlayerNetValue(tileOn.ownedBy, amount);
+                
+                BG.GameController.addToBonus(state, tax);
                 return {func: "payOwnerOfShop", loc: tileOn.loc};
             },
             askToBuyShop: function(state, player, tileOn){
@@ -2274,14 +2318,15 @@ var boardGameCore = function(exportTarget, key){
                 }
                 return BG.MenuController.makeMenu(state, {menu: "askBuyShop", display: "dialogue"});
             },
-            landOnMainTile: function(state, player){
-                //The player gets another roll when landing on the base tile.
+            resetRoll: function(state, player, chooseDirection){
+                if(chooseDirection) {
+                    player.lastTile = false;
+                } else {
+                    player.lastTile = state.currentMovementPath[state.currentMovementPath.length - 2];
+                }
                 state.currentMovementPath = [];
                 state.currentBoardActions = [];
                 state.menus[0].data.forceRoll = true;
-                //The player can go any possible direction now.
-                //Set the lastTile to the correct tile if we want to force forward direction of the player on this extra roll.
-                player.lastTile = false;
             },
             //After the player says "yes" to stopping here.
             playerConfirmMove: function(state, id){
@@ -2313,26 +2358,34 @@ var boardGameCore = function(exportTarget, key){
                             return BG.GameController.askToBuyShop(state, player, tileOn);
                         }
                     case "main":
+                        BG.GameController.resetRoll(state, player, true);
                         BG.MenuController.inputStates.playerTurnMenu.rollDie(state);
-                        BG.GameController.landOnMainTile(state, player);
-                        return [{func: "clearStage", num: 2}, {func: "landOnMainTile"}, {func: "rollDie", rollsNums: state.menus[0].data.rollsNums}];
+                        return [{func: "resetRoll", choose: true}, {func: "rollDie", rollsNums: state.menus[0].data.rollsNums}];
                     case "vendor":
                         return BG.GameController.endTurn(state);
                     case "itemshop":
                         return BG.GameController.endTurn(state);
+                    case "warp":
+                        return [BG.GameController.warpPlayerTo(state, player, BG.MapController.getTileAt(state, tileOn.exit), true), BG.GameController.endTurn(state)];
+                    case "roll-again":
+                        BG.GameController.resetRoll(state, player);
+                        BG.MenuController.inputStates.playerTurnMenu.rollDie(state);
+                        return [{func: "resetRoll"}, {func: "rollDie", rollsNums: state.menus[0].data.rollsNums}];
+                    case "toll":
+                        return BG.GameController.endTurn(state);
+                        break;
                 }
             },
             playerGoBackMove: function(state, id){
                 let player = this.getPlayer(state, id);
-                player.finish = false;
                 state.currentMovementPath.pop();
                 let tileTo = state.currentMovementPath[state.currentMovementPath.length - 1];
-                if(!BG.Utility.isServer()){
-                    player.sprite.finish = false;
-                    BG.GameController.tileDetails.displayShop(tileTo);
-                }
                 BG.GameController.movePlayer(player, tileTo);
                 BG.MapController.checkResetPassByTile(state, tileTo);
+                if(!BG.Utility.isServer()){
+                    BG.GameController.tileDetails.displayShop(tileTo);
+                    BG.state.counter.updateRoll(player.sprite.position, BG.state.currentMovementNum - (BG.state.currentMovementPath.length - 1), player.sprite.finish);
+                }
                 return tileTo.loc;
             },  
             //When the player steps onto the last tile of the movement
@@ -2343,13 +2396,6 @@ var boardGameCore = function(exportTarget, key){
                 player.loc = tileTo.loc;
                 if(!BG.Utility.isServer()){
                     player.sprite.moveTo(tileTo.loc);
-                    if(!player.sprite.finish){
-                        BG.state.counter.visible = true;
-                        BG.state.counter.updateRoll(player.sprite.position, BG.state.currentMovementNum - (BG.state.currentMovementPath.length - 1));
-                    } else {
-                        BG.state.counter.visible = false;
-                    }
-                    
                     BG.AudioController.playSound("step-on-tile");
                 }
             },
@@ -2381,6 +2427,8 @@ var boardGameCore = function(exportTarget, key){
 
                 state.turnOrder[0].lastTile = state.currentMovementPath[state.currentMovementPath.length - 2];
                 state.turnOrder.push(state.turnOrder.shift());
+                state.turn ++;
+                state.round = Math.ceil(state.turn / state.turnOrder.length);
                 BG.GameController.startTurn(state);
                 return {func: "endTurn"};
             },
@@ -2400,7 +2448,6 @@ var boardGameCore = function(exportTarget, key){
                 player.upgraded = 0;
                 player.auctioned = 0;
                 player.tileTo = false;
-                player.finish = false;
                 player.skipFinish = false;
                 BG.GameController.reduceItemTurns(player);
 
@@ -2553,7 +2600,7 @@ var boardGameCore = function(exportTarget, key){
         };
         BG.Objects = {
             Player: function(position, props){
-                let object = BG.ObjectData["player.obj"].clone();
+                let object = BG.ObjectData["player.gltf"].scene.children[0].clone();
                 object.p = props;
                 object.initialize = function(){
                     this.position.x = position.x;
@@ -2566,7 +2613,6 @@ var boardGameCore = function(exportTarget, key){
                     this.p.allowMovement = true;
                     
                     let lastTile = BG.state.currentMovementPath[BG.state.currentMovementPath.length - 2];
-                    console.log(BG.state.currentMovementPath)
                     let tileOn = BG.MapController.getTileAt(BG.state, this.p.loc);
                     let dirs = tileOn.dirs ? tileOn.dirs.slice() : Object.keys(tileOn.dir);
                     //Force the player to continue along the path that they were on from last turn.
@@ -2593,7 +2639,6 @@ var boardGameCore = function(exportTarget, key){
                     //Allow going back if it's the last tile
                     if(tileOn.dirs){
                         if(lastTile){
-                            console.log(BG.state.currentMovementPath, tileOn.loc, lastTile.loc)
                             let allowDir = BG.Utility.convertCoordToDir(BG.Utility.compareLocsForDirection(tileOn.loc, lastTile.loc));
                             dirs.push(allowDir);
                         }
@@ -2662,9 +2707,14 @@ var boardGameCore = function(exportTarget, key){
                         z: position.z
                     }
                 });
-                object.updateRoll = function(position, roll){
-                    this.position.set(position.x, position.y + 3, position.z);
-                    this.geometry = BG.DisplayController.generateTextGeometry({message: "" + roll, size: 1, drawFrom: "middle"});
+                object.updateRoll = function(position, roll, finish){
+                    if(!finish){
+                        this.visible = true;
+                        this.position.set(position.x, position.y + 3, position.z);
+                        this.geometry = BG.DisplayController.generateTextGeometry({message: "" + roll, size: 1, drawFrom: "middle"});
+                    } else {
+                        this.visible = false;
+                    }
                 };
                 return object;
             },
@@ -2844,19 +2894,30 @@ var boardGameCore = function(exportTarget, key){
                             break;
                         //Vendor gets an image of the product.
                         case "vendor":
-                            
                             BG.DisplayController.setMaterial(
                                 object.tileStructure, 
                                 "top", 
                                 BG.TextureData[props.itemName.toLowerCase() + ".png"], 
                                 {color: {r: 1, g: 1, b: 1}}
                             );
+                    
+                            object.tileStructure.add( BG.DisplayController.createText({
+                                color: 0xFFFFFF,
+                                message: "Vendor", 
+                                drawFrom: "middle",
+                                size: 0.25,
+                                position: {
+                                    x: 0, 
+                                    y: 0.11,
+                                    z: BG.c.tileH / 1.2
+                                }
+                            }) );
                             break;
                         case "main":
                             BG.DisplayController.setMaterial(
                                 object.tileStructure, 
                                 "top", 
-                                BG.TextureData["main-tile.png"], 
+                                BG.TextureData[object.p.image], 
                                 {color: {r: 1, g: 1, b: 1}}
                             );
                             object.tileStructure.add( BG.DisplayController.createText({
@@ -2890,7 +2951,56 @@ var boardGameCore = function(exportTarget, key){
                                 }
                             }) );
                             break;
-                    }    
+                        case "warp":
+                            BG.DisplayController.setMaterial(
+                                object.tileStructure, 
+                                "top", 
+                                BG.TextureData[object.p.image], 
+                                {color: {r: 1, g: 1, b: 1}}
+                            );
+                            break;
+                        case "toll":
+                            BG.DisplayController.setMaterial(
+                                object.tileStructure, 
+                                "top", 
+                                BG.TextureData[object.p.image], 
+                                {color: {r: 1, g: 1, b: 1}}
+                            );
+                            break;
+                        case "roll-again":
+                            BG.DisplayController.setMaterial(
+                                object.tileStructure, 
+                                "top", 
+                                BG.TextureData[object.p.image], 
+                                {color: {r: 1, g: 1, b: 1}}
+                            );
+                            break;
+                    }
+                    if(object.p.dirs){
+                        object.p.dirs.forEach((dir) => {
+                            var geometry = new THREE.PlaneGeometry(3, 3);
+                            var material = new THREE.MeshBasicMaterial( {map: BG.TextureData["arrow.png"], transparent: true, renderOrder: 1} );
+                            var filterPlane = new THREE.Mesh( geometry, material );
+                            filterPlane.rotation.x = Math.PI * 1.5;
+                            filterPlane.position.y = 0.11;
+                            switch(dir){
+                                case "up":
+                                    filterPlane.rotation.z = 0;
+                                    break;
+                                case "right":
+                                    filterPlane.rotation.z = Math.PI * 1.5;
+                                    break;
+                                case "down":
+                                    filterPlane.rotation.z = Math.PI * 1;
+
+                                    break;
+                                case "left":
+                                    filterPlane.rotation.z = Math.PI * 0.5;
+                                    break;
+                            }
+                            object.tileStructure.add(filterPlane);
+                        });
+                    }
                 };
                 object.updateTile = function(props){
                     switch(props.type){

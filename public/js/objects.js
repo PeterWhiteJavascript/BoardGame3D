@@ -306,6 +306,15 @@ Quintus.Objects = function(Q) {
                         }
                         miniTile.p.stroke = BG.state.map.districts[tile.district].color;
                         break;
+                    case "roll-again":
+                        miniTile.insert(new Q.UI.Text({label: "R", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        break;
+                    case "toll":
+                        miniTile.insert(new Q.UI.Text({label: "T", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        break;
+                    case "warp":
+                        miniTile.insert(new Q.UI.Text({label: "W", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        break
                 }
                 if(player && BG.Utility.locsMatch(player.loc, tile.loc)){
                     this.pulseTile(miniTile);
@@ -435,6 +444,26 @@ Quintus.Objects = function(Q) {
 
                         this.shopIcon.p.sheet = "tile-structure-4";
                         break;
+                    case "toll":
+                        
+                        this.shopTextCont.hide();
+                        this.shopRankContainer.hide();
+
+                        this.districtCont.p.fill = "#AAA";
+                        this.districtCont.text.p.label = "Toll";
+
+                        //this.shopIcon.p.sheet = "home-base-1";
+                        break;
+                    case "roll-again":
+                        
+                        this.shopTextCont.hide();
+                        this.shopRankContainer.hide();
+
+                        this.districtCont.p.fill = "#AAA";
+                        this.districtCont.text.p.label = "Toll";
+
+                        //this.shopIcon.p.sheet = "home-base-1";
+                        break;
                 }
             }
             this.shop = shop;
@@ -558,7 +587,7 @@ Quintus.Objects = function(Q) {
             if(textArea.p.text) textArea.p.text.destroy();
             textArea.p.text = textArea.insert(new Q.ScrollingText({label:item}));
             textArea.p.text.on("doneScrolling", processDialogue);
-            state.menus[0].currentCont = textArea.p.text;
+            state.menus[0].currentCont = textArea.p.text[0];
             
             if(!dialogue[idx + 1]){
                 state.menus[0].currentCont = optionsArea;

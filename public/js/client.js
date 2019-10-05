@@ -195,6 +195,8 @@ let clientSide = function(){
                         users: data.users
                     });
                     
+                    
+                    //camera.position.set(gameData.map.maxX - 7, 22, gameData.map.maxY + 3);
                     camera.position.set(gameData.map.maxX - 7, 12, gameData.map.maxY + 3);
                     camera.rotation.set(-Math.PI * 0.40, 0, 0);
                     const direction = new THREE.Vector3();
@@ -243,7 +245,7 @@ let clientSide = function(){
                         .8 // low restitution
                     );
                     physicsFloor = new Physijs.BoxMesh(
-                        new THREE.CubeGeometry(50, 3, 50),
+                        new THREE.CubeGeometry(50, 5, 50),
                         physicsFloorMaterial,
                         0 // mass
                     );
@@ -268,7 +270,7 @@ let clientSide = function(){
                         let player = gameData.players[i];
                         player.sprite = BG.GameController.createObject("Player", {
                             x: player.loc[0] * (BG.c.tileW + BG.c.tileOffset) + BG.c.tileW,
-                            y: 0.1,
+                            y: 1.25,
                             z: player.loc[1] * (BG.c.tileH + BG.c.tileOffset) + BG.c.tileH * 1.1
                         }, player);
                         scene.add(player.sprite);

@@ -1,3 +1,5 @@
+import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r108/examples/jsm/loaders/GLTFLoader.js';
+
 $(function(){
     require(['socket.io/socket.io.js']);
     
@@ -55,7 +57,7 @@ $(function(){
     let dataLoader = BG.dataLoader = new THREE.FileLoader();    
     let mtlLoader = BG.mtlLoader = new THREE.MTLLoader();
     let textureLoader = BG.textureLoader = new THREE.TextureLoader();
-    
+    let gltfLoader = new GLTFLoader();
     let fontLoader = new THREE.FontLoader();
     
     
@@ -65,6 +67,7 @@ $(function(){
             let dataFiles = files["data/constants"];
             let materialFiles = files["images/3d"].filter((filename) => {let split = filename.split(".");if(split[split.length - 1] === "mtl") { return filename;}});
             let objectFiles = files["images/3d"].filter((filename) => {let split = filename.split(".");if(split[split.length - 1] === "obj") { return filename;}});
+            let gltfFiles = files["images/3d"].filter((filename) => {let split = filename.split(".");if(split[split.length - 1] === "gltf") { return filename;}});
             let imageFiles = files["images/2d"];
             let fontFiles = files["data/fonts"];
             let totalFiles = audioFiles.length + dataFiles.length + materialFiles.length + fontFiles.length + imageFiles.length;
@@ -132,6 +135,15 @@ $(function(){
                     BG.FontsData[split[split.length - 1]] = font;
                 });
             });
+            gltfFiles.forEach(file => {
+                gltfLoader.load(file, function(obj){
+                    loadedFiles++;
+                    checkFinished();
+                    let split = file.split("/");
+                    BG.ObjectData[split[split.length - 1]] = obj;
+                });
+            });
+            console.log(BG.ObjectData)
         }
         
         loadFiles(connectionData.loadFiles, function(){
@@ -237,8 +249,8 @@ $(function(){
                         case "rollDie":
                             BG.GameController.startRollingDie(state, r.rollsNums, player.sprite);
                             break;
-                        case "landOnMainTile":
-                            BG.GameController.landOnMainTile(state, player);
+                        case "resetRoll":
+                            BG.GameController.resetRoll(state, player, r.choose);
                             break;
                         case "throwDice":
                             BG.GameController.throwDice(state, r.currentMovementNum, r.rollsNums);
@@ -254,16 +266,19 @@ $(function(){
                                 player.sprite.finish = r.finish;
                                 BG.GameController.movePlayer(player, tile);
                                 BG.MapController.checkPassByTile(state, player);
+                                BG.state.counter.updateRoll(player.sprite.position, BG.state.currentMovementNum - (BG.state.currentMovementPath.length - 1), player.sprite.finish);
                             } else if(r.direction === "back"){
                                 BG.GameController.playerGoBackMove(state, player.playerId);
                             }
                             if(r.finish && !r.passBy){
                                 BG.GameController.askFinishMove(state, player);
                             }
+                            
                             break;
                         case "playerGoBackMove":
                             BG.Q.clearStage(2);
                             r.func = "playerMovement";
+                            player.sprite.finish = false;
                             BG.GameController.playerGoBackMove(state, player.playerId);
                             player.sprite.showMovementDirections();
                             break;
@@ -304,6 +319,9 @@ $(function(){
                             break;
                         case "goBackMenu":
                             state.menus[0].data.goBack(state);
+                            break;
+                        case "warpPlayerTo":
+                            BG.GameController.warpPlayerTo(state, player, BG.MapController.getTileAt(state, r.loc), r.subdue);
                             break;
                         case "makeMoveShopSelector":
                             BG.MenuController.makeMoveShopSelector(state, r.confirmType, r.backFunc, r.startPos);

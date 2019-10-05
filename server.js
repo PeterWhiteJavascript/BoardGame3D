@@ -49,7 +49,7 @@ Server.prototype.createNewUser = function(p){
 Server.prototype.addUserToGame = function(user, socket, room){
     if(!this.gameData[room]){
         //All of these settings will eventually be set by the player when creating a game.
-        let map = "example-map.json";
+        let map = "castle.json";
         this.gameData[room] = this.createNewGame({
             host: user,
             map: map,
