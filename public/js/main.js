@@ -179,7 +179,6 @@ $(function(){
                         turnOrder: data.turnOrder
                     });
                     
-                    
                     BG.GameController.startTurn(BG.state);
                 });
             });
@@ -206,7 +205,7 @@ $(function(){
                                     break;
                                 case "moveArrows":
                                     //player.sprite.destroyArrows();
-                                    player.sprite.p.allowMovement = false;
+                                    player.p.allowMovement = false;
                                     break;
                             }
                             break;
@@ -247,7 +246,7 @@ $(function(){
                             BG.MenuController.switchMenu(state, r.props);
                             break;
                         case "rollDie":
-                            BG.GameController.startRollingDie(state, r.rollsNums, player.sprite);
+                            BG.GameController.startRollingDie(state, r.rollsNums, player);
                             break;
                         case "resetRoll":
                             BG.GameController.resetRoll(state, player, r.choose);
@@ -261,14 +260,13 @@ $(function(){
                             BG.GameController.tileDetails.displayShop(tile);
                             if(r.direction === "forward"){
                                 state.currentMovementPath.push(tile);
-                                player.tileTo = tile;
-                                player.finish = r.finish;
-                                player.sprite.finish = r.finish;
+                                player.p.tileTo = tile;
+                                player.p.finish = r.finish;
                                 BG.GameController.movePlayer(player, tile);
                                 BG.MapController.checkPassByTile(state, player);
-                                BG.state.counter.updateRoll(player.sprite.position, BG.state.currentMovementNum - (BG.state.currentMovementPath.length - 1), player.sprite.finish);
+                                BG.state.counter.updateRoll(player.sprite.position, BG.state.currentMovementNum - (BG.state.currentMovementPath.length - 1), player.p.finish);
                             } else if(r.direction === "back"){
-                                BG.GameController.playerGoBackMove(state, player.playerId);
+                                BG.GameController.playerGoBackMove(state, player.p.playerId);
                             }
                             if(r.finish && !r.passBy){
                                 BG.GameController.askFinishMove(state, player);
@@ -278,24 +276,24 @@ $(function(){
                         case "playerGoBackMove":
                             BG.Q.clearStage(2);
                             r.func = "playerMovement";
-                            player.sprite.finish = false;
-                            BG.GameController.playerGoBackMove(state, player.playerId);
-                            player.sprite.showMovementDirections();
+                            player.p.finish = false;
+                            BG.GameController.playerGoBackMove(state, player.p.playerId);
+                            player.showMovementDirections();
                             break;
                         case "purchaseSet":
-                            BG.GameController.purchaseSet(state, r.num, player.playerId);
+                            BG.GameController.purchaseSet(state, r.num, player.p.playerId);
                             BG.AudioController.playSound("purchase-item");
                             break;
                         case "purchaseSetItem":
-                            BG.GameController.purchaseSetItem(state, r.loc, player.playerId);
+                            BG.GameController.purchaseSetItem(state, r.loc, player.p.playerId);
                             BG.AudioController.playSound("purchase-item");
                             break;
                         case "purchaseItem":
-                            BG.GameController.purchaseItem(state, Object.assign({id: r.item.id, cost: r.item.cost}, BG.c.items[r.item.id]), player.playerId);
+                            BG.GameController.purchaseItem(state, r.item, r.cost, player.p.playerId);
                             break;
                         case "buyShop":
                             if(r.itemIdx >= 0){
-                                player.items.splice(r.itemIdx, 1);
+                                player.p.items.splice(r.itemIdx, 1);
                             }
                             var shop = BG.MapController.getTileAt(state, r.loc);
                             BG.GameController.buyShop(state, player, shop, r.couponValue);
@@ -354,7 +352,7 @@ $(function(){
                             BG.GameController.upgradeShop(state, r.rankUp, r.cost);
                             break;
                         case "finalizeBuyStock":
-                            BG.GameController.buyStock(BG.GameController.getPlayer(state, r.playerId), r.num, r.cost, state.map.districts[r.district]);
+                            BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, state.map.districts[r.district]], [r.num, r.cost]);
                             break;
                         case "finalizeSellStock":
                             BG.GameController.sellStock(BG.GameController.getPlayer(state, r.playerId), r.num, r.cost, state.map.districts[r.district]);

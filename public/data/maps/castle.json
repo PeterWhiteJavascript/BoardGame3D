@@ -15,7 +15,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 1
         },
         {
             "x": 4,
@@ -24,16 +24,19 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 1
         },
         {
             "x": 6,
             "y": 0,
-            "value": 100,
-            "rank": 1,
             "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "vendor",
+            "e": ["Wheat", "Bread"],
+            "p": ["Bread", 1000],
+            "text": {
+                "e": "I'll give you some bread for your wheat.",
+                "p": "Want to buy some bread?"
+            }
         },
         {
             "x": 8,
@@ -42,7 +45,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 1
         },
         {
             "x": 10,
@@ -51,16 +54,12 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 1
         },
         {
             "x": 12,
             "y": 0,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "bingo"
         },
         {
             "x": 12,
@@ -69,7 +68,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 2
         
         },
         {
@@ -79,16 +78,19 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 2
         },
         {
             "x": 12,
             "y": 6,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "name": "Winery",
+            "type": "vendor",
+            "e": ["Grapes", "Wine"],
+            "p": ["Wine", 1000],
+            "text": {
+                "e": "I'll give you some wine for your grapes.",
+                "p": "Want to buy some wine?"
+            }
         },
         {
             "x": 12,
@@ -97,16 +99,12 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 2
         },
         {
             "x": 12,
             "y": 10,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "interest"
         },
         {
             "x": 0,
@@ -129,11 +127,15 @@
         {
             "x": 0,
             "y": 6,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "name": "Brewery",
+            "type": "vendor",
+            "e": ["Hops", "Beer"],
+            "p": ["Beer", 1000],
+            "text": {
+                "e": "I'll give you some beer for your hops.",
+                "p": "Want to buy some beer for 1000g?",
+                "b": "What are you here for?"
+            }
         },
         {
             "x": 0,
@@ -151,7 +153,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 4
         },
         {
             "x": 4,
@@ -160,7 +162,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 4
         },
         {
             "x": 6,
@@ -169,25 +171,18 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
-        },
-        {
-            "x": 6,
-            "y": 4,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "district": 4
         },
         {
             "x": 8,
             "y": 4,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "name": "Item Shop",
+            "type": "itemshop",
+            "items":[
+                ["25% off Coupon", 100],
+                ["Extra Die", 100],
+                ["Warp", 300]
+            ]
         },
         {
             "x": 10,
@@ -196,16 +191,12 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 4
         },
         {
             "x": 4,
             "y": 8,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "stockbroker"
         },
         {
             "x": 6,
@@ -214,7 +205,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 4
         },
         {
             "x": 8,
@@ -223,7 +214,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 4
         },
         {
             "x": 0,
@@ -237,27 +228,27 @@
         {
             "x": 0,
             "y": 12,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "image": "main-tile.png",
+            "name": "Home",
+            "type": "main",
+            "set": {
+                "items": ["Beer", "Bread", "Wine"],
+                "value": 1500
+            }
         },
         {
             "x": 0,
             "y": 14,
-            "image": "main-tile.png",
-            "name": "Home",
-            "type": "main"
-        },
-        {
-            "x": 0,
-            "y": 16,
             "value": 100,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
             "district": 0
+        },
+        {
+            "x": 0,
+            "y": 16,
+            "type": "bingo"
         },
         {
             "x": 2,
@@ -266,7 +257,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 3
         },
         {
             "x": 4,
@@ -275,16 +266,12 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 3
         },
         {
             "x": 6,
             "y": 16,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "arcade"
         },
         {
             "x": 6,
@@ -309,7 +296,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 3
         },
         {
             "x": 10,
@@ -318,7 +305,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 3
         },
         {
             "x": 12,
@@ -335,7 +322,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 2
         },
         {
             "x": 12,
@@ -344,7 +331,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 2
         },
         {
             "x": 14,
@@ -353,7 +340,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 2
         },
         {
             "x": 16,
@@ -369,16 +356,14 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 5
         },
         {
             "x": 20,
             "y": 12,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "image": "roll-again.jpg",
+            "name": "Extra Roll",
+            "type": "roll-again"
         },
         {
             "x": 20,
@@ -387,7 +372,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 5
         },
         {
             "x": 20,
@@ -396,25 +381,19 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 5
         },
         {
             "x": 20,
             "y": 6,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
-        },
-        {
-            "x": 20,
-            "y": 4,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "name": "Hops Farm",
+            "type": "vendor",
+            "e": ["Beer", 500],
+            "p": ["Hops", 0],
+            "text": {
+                "e": "Can I buy that beer from you?",
+                "p": "Have some hops."
+            }
         },
         {
             "x": 22,
@@ -423,7 +402,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 6
         },
         {
             "x": 24,
@@ -432,25 +411,13 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 6
         },
         {
             "x": 26,
-            "y": 4,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
-        },
-        {
-            "x": 27,
             "y": 6,
             "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "arcade"
         },
         {
             "x": 27,
@@ -459,7 +426,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 7
         },
         {
             "x": 27,
@@ -468,16 +435,18 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 7
         },
         {
             "x": 26,
             "y": 12,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "name": "Item Shop",
+            "type": "itemshop",
+            "items":[
+                [0, 100],
+                [2, 100],
+                [6, 300]
+            ]
         },
         {
             "x": 24,
@@ -486,7 +455,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 5
         },
         {
             "x": 22,
@@ -495,7 +464,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 5
         },
         {
             "x": 26,
@@ -504,16 +473,12 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 6
         },
         {
             "x": 27,
             "y": 0,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "bingo"
         },
         {
             "x": 29,
@@ -522,7 +487,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 6
         },
         {
             "x": 31,
@@ -531,16 +496,19 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 6
         },
         {
-            "x": 33,
+            "x": 32,
             "y": 2,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "name": "Wheat Farm",
+            "type": "vendor",
+            "e": ["Bread", 500],
+            "p": ["Wheat", 0],
+            "text": {
+                "e": "Can I buy that bread from you?",
+                "p": "Have some wheat."
+            }
         },
         {
             "x": 33,
@@ -549,34 +517,21 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 7
         },
         {
-            "x": 33,
+            "x": 32,
             "y": 6,
             "value": 100,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
-        },
-        {
-            "x": 33,
-            "y": 8,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "district": 7
         },
         {
             "x": 31,
             "y": 8,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "interest"
         },
         {
             "x": 29,
@@ -585,7 +540,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 7
         },
         {
             "x": 31,
@@ -595,7 +550,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 11
         },
         {
             "x": 31,
@@ -605,7 +560,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 11
         },
         {
             "x": 31,
@@ -615,17 +570,13 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 11
         },
         {
             "x": 31,
             "y": 16,
             "dirs": ["down", "right"],
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "stockbroker"
         },
         {
             "x": 33,
@@ -643,7 +594,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 11
         },
         {
             "x": 30,
@@ -653,7 +604,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 11
         },
         {
             "x": 28,
@@ -663,7 +614,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 11
         },
         {
             "x": 26,
@@ -673,16 +624,12 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 11
         },
         {
             "x": 24,
             "y": 20,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "bingo"
         },
         {
             "x": 22,
@@ -691,7 +638,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 9
         },
         {
             "x": 20,
@@ -700,7 +647,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 9
         },
         {
             "x": 18,
@@ -709,7 +656,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 9
         },
         {
             "x": 16,
@@ -718,7 +665,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 9
         },
         {
             "x": 24,
@@ -727,7 +674,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 8
         },
         {
             "x": 24,
@@ -736,7 +683,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 8
         },
         {
             "x": 18,
@@ -745,7 +692,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 8
         },
         {
             "x": 20,
@@ -754,7 +701,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 8
         },
         {
             "x": 20,
@@ -763,25 +710,24 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 8
         },
         {
             "x": 22,
             "y": 16,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "name": "Vineyard",
+            "type": "vendor",
+            "e": ["Wine", 500],
+            "p": ["Grapes", 0],
+            "text": {
+                "e": "Would you sell me your wine?",
+                "p": "Would you like some grapes?"
+            }
         },
         {
             "x": 18,
             "y": 18,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "interest"
         },
         {
             "x": 14,
@@ -790,16 +736,12 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 9
         },
         {
             "x": 12,
             "y": 20,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "type": "stockbroker"
         },
         {
             "x": 10,
@@ -808,7 +750,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 10
         },
         {
             "x": 8,
@@ -817,7 +759,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 10
         },
         {
             "x": 6,
@@ -826,16 +768,14 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 10
         },
         {
             "x": 4,
             "y": 20,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
-            "type": "shop",
-            "district": 0
+            "image": "roll-again.jpg",
+            "name": "Extra Roll",
+            "type": "roll-again"
         },
         {
             "x": 2,
@@ -844,7 +784,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 10
         },
         {
             "x": 0,
@@ -853,7 +793,7 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 10
         },
         {
             "x": 0,
@@ -862,24 +802,62 @@
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
-            "district": 0
+            "district": 10
         }
     ],
     "districts": [
         {
-            "color": "pink",
-            "stockPrice": 10
+            "color": "red",
+            "stockPrice": 12
+        },
+        {
+            "color": "orange",
+            "stockPrice": 12
+        },
+        {
+            "color": "yellow",
+            "stockPrice": 12
+        },
+        {
+            "color": "green",
+            "stockPrice": 12
+        },
+        {
+            "color": "blue",
+            "stockPrice": 14
+        },
+        {
+            "color": "purple",
+            "stockPrice": 9
+        },
+        {
+            "color": "brown",
+            "stockPrice": 9
+        },
+        {
+            "color": "magenta",
+            "stockPrice": 9
+        },
+        {
+            "color": "aquamarine",
+            "stockPrice": 8
+        },
+        {
+            "color": "cyan",
+            "stockPrice": 8
+        },
+        {
+            "color": "olive",
+            "stockPrice": 6
+        },
+        {
+            "color": "maroon",
+            "stockPrice": 5
         }
     ],
-    "sets":[
-        
-    ],
-    "setPieces":{
-        
-    },
     "map": {
-        "w": 40,
-        "h": 22,
+        "w": 34,
+        "h": 21,
         "bgm": "bgm-01"
     },
     "modes": {

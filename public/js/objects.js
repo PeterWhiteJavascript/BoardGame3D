@@ -219,6 +219,7 @@ Quintus.Objects = function(Q) {
             
         }
     });
+    
     Q.UI.Container.extend("SetsMenu",{
         init: function(p){
             this._super(p, {
@@ -245,7 +246,8 @@ Quintus.Objects = function(Q) {
                     let xLoc = j * 100 - (((sets[i].items.length - 1 ) / 2) * 100) + setImagesCont.p.w / 2;
                     setImagesCont.insert(new Q.UI.Container({x: xLoc, y: 10 - 5, w: 70, h: 70, cy:0, border: 5, radius: 20, fill: "gold", opacity: 0.5}));
                     setImagesCont.insert(new Q.Sprite({x: xLoc, y: 10, cy:0, sheet: (sets[i].items[j].toLowerCase()) + "-vendor", frame: 0}));
-                    setImagesCont.insert(new Q.UI.Text({x: xLoc + 20, y: 10, label: (player.setPieces[sets[i].items[j]] || 0) + ""}));
+                    //setImagesCont.insert(new Q.UI.Text({x: xLoc + 20, y: 10, label: (player.setPieces[sets[i].items[j]] || 0) + ""}));
+                    //TODO: find sets from items
                 }
                 let setTextCont = cont.insert(new Q.UI.Container({cx:0, cy:0, w: cont.p.w * 0.3, h: cont.p.h, x: cont.p.w * 0.7, fill: "#EEE"}));
                 setTextCont.insert(new Q.UI.Text({cx:0, cy:0, x: 10, y: 10, label: sets[i].name, align: "left"}));
@@ -282,23 +284,23 @@ Quintus.Objects = function(Q) {
             //TODO: size things based on actual map size to fit the screen better.
             let map = BG.state.map;
             let mapObj = this.stage.insert(new Q.UI.Container({x: this.p.w, y: this.p.h, w: this.p.w - 20, h: this.p.h - 20, border: 1, fill: "#BBB"}));
-            let distance = 16;
+            let distance = 20;
             //Pulse the tile that the player is on
             let player = this.p.player;
             this.miniTiles = [];
             for(let i = 0; i < map.tiles.length; i++){
                 let tile = map.tiles[i];
-                let miniTile = mapObj.insert(new Q.UI.Container({x: (tile.loc[0] - map.centerX) * distance, y: (tile.loc[1] - map.centerY) * distance, w: 24, h: 16, fill: "transparent", radius: 1, border: 2, stroke: "black", district: tile.district}));
+                let miniTile = mapObj.insert(new Q.UI.Container({x: (tile.loc[0] - map.centerX) * distance, y: (tile.loc[1] - map.centerY) * distance, w: 24, h: 24, fill: "transparent", radius: 1, border: 2, stroke: "black", district: tile.district}));
                 miniTile.add("tween");
                 switch(tile.type){
                     case "main":
-                        miniTile.insert(new Q.UI.Text({label: "H", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        miniTile.insert(new Q.UI.Text({label: "H", size: 12, y: -miniTile.p.h / 4}));
                         break;
                     case "vendor":
-                        miniTile.insert(new Q.UI.Text({label: "V", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        miniTile.insert(new Q.UI.Text({label: "V", size: 12, y: -miniTile.p.h / 4}));
                         break;
                     case "itemshop":
-                        miniTile.insert(new Q.UI.Text({label: "I", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        miniTile.insert(new Q.UI.Text({label: "I", size: 12, y: -miniTile.p.h / 4}));
                         break;
                     case "shop":
                         if(tile.ownedBy){
@@ -307,16 +309,32 @@ Quintus.Objects = function(Q) {
                         miniTile.p.stroke = BG.state.map.districts[tile.district].color;
                         break;
                     case "roll-again":
-                        miniTile.insert(new Q.UI.Text({label: "R", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        miniTile.insert(new Q.UI.Text({label: "R", size: 12, y: -miniTile.p.h / 4}));
                         break;
                     case "toll":
-                        miniTile.insert(new Q.UI.Text({label: "T", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        miniTile.insert(new Q.UI.Text({label: "T", size: 12, y: -miniTile.p.h / 4}));
                         break;
                     case "warp":
-                        miniTile.insert(new Q.UI.Text({label: "W", size: 12, y: -miniTile.p.h / 2 + 1}));
+                        miniTile.insert(new Q.UI.Text({label: "W", size: 12, y: -miniTile.p.h / 4}));
                         break
+                    case "bingo":
+                        miniTile.insert(new Q.UI.Text({label: "B", size: 12, y: -miniTile.p.h / 4}));
+                        break;
+                    case "stockbroker":
+                        miniTile.insert(new Q.UI.Text({label: "S", size: 12, y: -miniTile.p.h / 4}));
+                        break;
+                    case "interest":
+                        miniTile.insert(new Q.UI.Text({label: "IN", size: 12, y: -miniTile.p.h / 4}));
+                        break;
+                    case "arcade":
+                        miniTile.insert(new Q.UI.Text({label: "AR", size: 12, y: -miniTile.p.h / 4}));
+                        break;
                 }
-                if(player && BG.Utility.locsMatch(player.loc, tile.loc)){
+                miniTile.insert(new Q.UI.Text({label: tile.loc[0] + ", " + tile.loc[1], size: 8, y: 16}));
+                if(tile.district >= 0){
+                    miniTile.insert(new Q.UI.Text({label: tile.district + "", size: 8, y: -4, x: 0}));
+                }
+                if(player && BG.Utility.locsMatch(player.p.loc, tile.loc)){
                     this.pulseTile(miniTile);
                 }
                 this.miniTiles.push(miniTile);
@@ -431,9 +449,10 @@ Quintus.Objects = function(Q) {
                         this.shopRankContainer.hide();
 
                         this.districtCont.p.fill = "#AAA";
-                        this.districtCont.text.p.label = shop.itemName + " Vendor";
+                        this.districtCont.text.p.label = shop.name;
 
-                        this.shopIcon.p.sheet = (shop.itemName.toLowerCase()) + "-vendor";
+                        //this.shopIcon.p.sheet = (shop.exchange[1].toLowerCase()) + "-vendor";
+                        
                         break;
                     case "itemshop":
                         this.shopTextCont.hide();
@@ -460,9 +479,48 @@ Quintus.Objects = function(Q) {
                         this.shopRankContainer.hide();
 
                         this.districtCont.p.fill = "#AAA";
-                        this.districtCont.text.p.label = "Toll";
+                        this.districtCont.text.p.label = "Extra Roll";
 
                         //this.shopIcon.p.sheet = "home-base-1";
+                        break;
+                    case "warp":
+                    
+                        this.shopTextCont.hide();
+                        this.shopRankContainer.hide();
+
+                        this.districtCont.p.fill = "#AAA";
+                        this.districtCont.text.p.label = "Warp";
+                        break;
+                    case "bingo":
+                        this.shopTextCont.hide();
+                        this.shopRankContainer.hide();
+
+                        this.districtCont.p.fill = "#AAA";
+                        this.districtCont.text.p.label = "Bingo";
+
+                        break;
+                    case "stockbroker":
+                        this.shopTextCont.hide();
+                        this.shopRankContainer.hide();
+
+                        this.districtCont.p.fill = "#AAA";
+                        this.districtCont.text.p.label = "Stockbroker";
+                        
+                        break;
+                    case "interest":
+                        this.shopTextCont.hide();
+                        this.shopRankContainer.hide();
+
+                        this.districtCont.p.fill = "#AAA";
+                        this.districtCont.text.p.label = "Interest";
+                        break;
+                    case "arcade":
+                        
+                        this.shopTextCont.hide();
+                        this.shopRankContainer.hide();
+
+                        this.districtCont.p.fill = "#AAA";
+                        this.districtCont.text.p.label = "Arcade";
                         break;
                 }
             }
@@ -596,6 +654,7 @@ Quintus.Objects = function(Q) {
         }
         processDialogue();
         let selected = state.menus[0].data.selected  || [0, 0];
+        
         state.menus[0].currentCont.p.menuButtons[selected[1]][selected[0]].hover();
     });
     
@@ -820,7 +879,7 @@ Quintus.Objects = function(Q) {
     });
     
     Q.scene("hud", function(stage){
-        let tileDetails = BG.GameController.tileDetails = stage.insert(new Q.ShopStatusBox({x: Q.width - BG.c.boxWidth - 50, y: 120, w: BG.c.boxWidth, h: BG.c.boxHeight, radius: 0, shopLoc: BG.state.turnOrder[0].loc, stage: stage}));
+        let tileDetails = BG.GameController.tileDetails = stage.insert(new Q.ShopStatusBox({x: Q.width - BG.c.boxWidth - 50, y: 120, w: BG.c.boxWidth, h: BG.c.boxHeight, radius: 0, shopLoc: BG.state.turnOrder[0].p.loc, stage: stage}));
 
         //Create the standings
         let standingsCont = stage.insert(new Q.StandardMenu({w: BG.c.boxWidth, h: BG.c.boxHeight, x: Q.width - BG.c.boxWidth - 50, y: BG.c.boxHeight + 150}));
@@ -828,16 +887,16 @@ Quintus.Objects = function(Q) {
         for(let i = 0; i < BG.state.turnOrder.length; i++){
             let player = BG.state.turnOrder[i];
             let playerCont = standingsCont.insert(new Q.UI.Container({x: 5, y: 5 + i * ~~((standingsCont.p.h - 5) / 4), w: standingsCont.p.w - 10, h: standingsCont.p.h / 4 - 5, fill: "white", cx:0, cy:0 }));
-            let playerIconContainer = playerCont.insert(new Q.UI.Container({x: 5 + 20, y: playerCont.p.h / 2, w: playerCont.p.h, h: playerCont.p.h, radius:3,  fill: player.color/*"transparent"*/}));
+            let playerIconContainer = playerCont.insert(new Q.UI.Container({x: 5 + 20, y: playerCont.p.h / 2, w: playerCont.p.h, h: playerCont.p.h, radius:3,  fill: player.p.color/*"transparent"*/}));
             let playerIcon = playerIconContainer.insert(new Q.Sprite({x: 0, y: 0, sheet: "player-icon-1", frame:0}));
-            let playerName = playerCont.insert(new Q.SmallText({x: 60, y: 5, label: player.name, cx:0, cy:0, color: "#111", align: "left"}));
-            let playerMoney = playerCont.insert(new Q.SmallText({x: 60, y: 25, label:player.money + " G", cx:0, cy:0, color: "#111", align: "left"}));
+            let playerName = playerCont.insert(new Q.SmallText({x: 60, y: 5, label: player.p.name, cx:0, cy:0, color: "#111", align: "left"}));
+            let playerMoney = playerCont.insert(new Q.SmallText({x: 60, y: 25, label:player.p.money + " G", cx:0, cy:0, color: "#111", align: "left"}));
             player.sprite.addEventListener("moneyChanged", () => {
-                playerMoney.p.label = player.money + " G";
+                playerMoney.p.label = player.p.money + " G";
             });
-            let playerNetValue = playerCont.insert(new Q.SmallText({x: 280, y: 25, label: "NV " + player.netValue, cx: 0, cy:0, color: "#111", align: "right"}));
+            let playerNetValue = playerCont.insert(new Q.SmallText({x: 280, y: 25, label: "NV " + player.p.netValue, cx: 0, cy:0, color: "#111", align: "right"}));
             player.sprite.addEventListener("netValueChanged", () => {
-                playerNetValue.p.label = "NV " + player.netValue;
+                playerNetValue.p.label = "NV " + player.p.netValue;
             });
         }        
     });

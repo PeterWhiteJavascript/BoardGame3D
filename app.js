@@ -61,7 +61,7 @@ io.on('connection', function (socket) {
                     users: game.users,
                     map: game.map,
                     settings: game.settings,
-                    turnOrder: BG.state.turnOrder.map((player) => {return player.playerId;})
+                    turnOrder: BG.state.turnOrder.map((player) => {return player.p.playerId;})
                 });
                 //Start the game by starting the first player's turn.
                 BG.GameController.startTurn(BG.state);

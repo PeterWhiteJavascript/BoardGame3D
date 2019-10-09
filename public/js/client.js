@@ -218,11 +218,11 @@ let clientSide = function(){
                     controls.enableKeys = false;*/
                     BG.state.turnOrder = [];
                     for(let i = 0; i < data.turnOrder.length; i++){
-                        BG.state.turnOrder.push(BG.state.players.find((player) => {return player.playerId === data.turnOrder[i];}));
+                        BG.state.turnOrder.push(BG.state.players.find((player) => {return player.p.playerId === data.turnOrder[i];}));
                     }
                     let expandFloor = BG.c.tileSize * 2;
-                    let floorW = (gameData.map.data.map.w + expandFloor) * (BG.c.tileW + BG.c.tileOffset);
-                    let floorH = (gameData.map.data.map.h + expandFloor) * (BG.c.tileH + BG.c.tileOffset);
+                    let floorW = (gameData.map.data.map.w + expandFloor) * (BG.c.tileW + BG.c.tileOffset) + BG.c.tileW / 2;
+                    let floorH = (gameData.map.data.map.h + expandFloor) * (BG.c.tileH + BG.c.tileOffset) + BG.c.tileH / 2;
                     // Floor
                     var floorGeometry = new THREE.PlaneGeometry(floorW, floorH);
                     var floorMaterial = new THREE.MeshPhongMaterial({
@@ -267,13 +267,7 @@ let clientSide = function(){
                     }
                     
                     for(let i = 0; i < gameData.players.length; i++){
-                        let player = gameData.players[i];
-                        player.sprite = BG.GameController.createObject("Player", {
-                            x: player.loc[0] * (BG.c.tileW + BG.c.tileOffset) + BG.c.tileW,
-                            y: 1.25,
-                            z: player.loc[1] * (BG.c.tileH + BG.c.tileOffset) + BG.c.tileH * 1.1
-                        }, player);
-                        scene.add(player.sprite);
+                        scene.add(gameData.players[i].sprite);
                     }
                     
                     
