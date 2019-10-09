@@ -1179,7 +1179,7 @@ var boardGameCore = function(exportTarget, key){
                             for(let i = 0; i < rolls; i++){
                                 let num = ~~(state.random() * (dieMax + 1 - dieMin)) + dieMin;
                                 roll += num;
-                                
+                                roll = 2;
                                 rollsNums.push(num);
                             }
                             state.currentMovementNum = roll;
@@ -1342,10 +1342,7 @@ var boardGameCore = function(exportTarget, key){
                         return BG.MenuController.makeCustomMenu(state, "buyStockMenu", {type: "buyStock", prev: ["askIfBuyingStock", [0, 0]], selected: 0});
                     },
                     confirmFalse: (state) => {
-                        state.menus[0].data = {func: "playerMovement"};
-                        return [
-                            {func: "clearStage", num: 2}
-                        ];
+                        return BG.GameController.checkFinishMove(state, state.turnOrder[0]);
                     }
                     
                 },
@@ -1367,12 +1364,13 @@ var boardGameCore = function(exportTarget, key){
                                 return BG.MenuController.inputStates.buyStockCyclerMenu.goBack(state);
                             } else {
                                 BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, district], [stockNumber, stockCost]);
-                                state.menus[0].data = {func: "playerMovement"};
-                                return [
-                                    {func: "finalizeBuyStock", num: stockNumber, cost: stockCost, district: district.id, playerId: player.p.playerId},
-                                    {func: "clearStage", num: 2}
-                                    
+                                
+                                let props = [
+                                    {func: "finalizeBuyStock", num: stockNumber, cost: stockCost, district: district.id, playerId: player.p.playerId}
                                 ];
+                                let finish = BG.GameController.checkFinishMove(state, state.turnOrder[0]);
+                                if(finish) props = props.concat(finish);
+                                return props;
                             }
                         }
                     },  
