@@ -38,8 +38,11 @@ Quintus.Objects = function(Q) {
                 fill: BG.OptionsController.options.menuColor, 
                 cx: 0, 
                 cy:0,
-                menuButtons: []
+                menuButtons: [],
+                buttonH: 35,
+                buttonSpacing: 5
             });
+            this.p.startY = this.p.y;
         },
         interact: function(button){
             button.trigger("interactWith", button.p.toContainer);
@@ -76,15 +79,17 @@ Quintus.Objects = function(Q) {
                 }
             }
         },
-        displayOptions: function(onHover){
+        displayOptions: function(onHover, maxShown){
             let options = BG.state.menus[0].itemGrid;
             let cursor = new Q.Cursor();
             this.p.menuButtons = [];
-            let menuButtonCont = this;
+            this.p.maxShown = maxShown;
+            let menuButtonCont = this.p.menuButtonCont = this.insert(new Q.UI.Container());
             for(let i = 0; i < options.length; i++){
+                let hidden = maxShown && i >= maxShown ? true : false;
                 this.p.menuButtons[i] = [];
                 for(let j = 0; j < options[i].length; j++){
-                    let button = this.insert(new Q.MenuButton({x: 5, y: 5 + 40 * i, w:175, label: options[i][j][0], func: options[i][j][1], props:options[i][j][2], cursor: cursor}));
+                    let button = menuButtonCont.insert(new Q.MenuButton({x: this.p.buttonSpacing, y: this.p.buttonSpacing + this.p.buttonH * i, w:this.p.w - this.p.buttonSpacing * 2, hidden: hidden, label: options[i][j][0], func: options[i][j][1], props:options[i][j][2], cursor: cursor}));
                     button.on("interactWith", function(){
                         this.removeContent();
                         //If there's no function, we're just cycling text.
@@ -107,14 +112,27 @@ Quintus.Objects = function(Q) {
                     this.p.menuButtons[i].push(button);
                 }
             }
-            this.p.menuButtons[0][0].hover();
+            this.p.menuButtons[this.p.selected[1]][this.p.selected[0]].hover();
+        },
+        hoverButton: function(coord){
+            let buttons = this.p.menuButtons;
+            buttons[coord[1]][coord[0]].hover();
+            if(this.p.maxShown){
+                //Set the y position based on which item is selected compared to the maxShown property.
+                this.p.menuButtonCont.p.y = Math.min(0, -((this.p.buttonH) * (coord[1] - (this.p.maxShown - 1))));
+                this.p.menuButtons.forEach((button) => {
+                    button[0].checkOverflow();
+                });
+            }
+            BG.AudioController.playSound("option-hover");
+            this.p.prevCoord = coord;
         }
     });
     Q.UI.Container.extend("MenuButton", {
         init: function(p){
             this._super(p, {
                 w: 140,
-                h: 35,
+                h: 30,
                 x:5,
                 cx:0, cy:0,
                 fill: "white",
@@ -135,23 +153,31 @@ Quintus.Objects = function(Q) {
             this.p.fill = color || this.p.selectedColour;
         },
         hover:function(){
-            for(let i = 0; i < this.container.p.menuButtons.length; i++){
-                for(let j = 0; j < this.container.p.menuButtons[i].length; j++){
-                    this.container.p.menuButtons[i][j].dehover();
+            for(let i = 0; i < this.container.container.p.menuButtons.length; i++){
+                for(let j = 0; j < this.container.container.p.menuButtons[i].length; j++){
+                    this.container.container.p.menuButtons[i][j].dehover();
                 }
             }
             this.setFill();
             
-            this.stage.insert(this.p.cursor, this.container);
+            this.stage.insert(this.p.cursor, this.container.container);
             this.p.cursor.p.x = this.p.x + this.p.w - 15;
             this.p.cursor.p.y = this.p.y + this.p.h / 2;
             this.p.cursor.refreshMatrix();
             this.p.radius = this.p.defaultRadius / 2;
+            this.show();
             this.trigger("hover");
         },
         addText:function(){
             let size = this.p.size || 14;
             this.insert(new Q.UI.Text({label: this.p.label, x: 10, y: this.p.h / 2 - size / 2, size: size || 14, align: "left"}));
+        },
+        checkOverflow: function(){
+            if(this.container.p.y * -1 > this.p.y || this.container.p.y * -1 + this.container.container.p.maxShown * this.p.h < this.p.y){
+                this.hide();
+            } else {
+                this.show();
+            }
         }
     });
     Q.UI.Text.extend("ScrollingText",{
@@ -568,7 +594,7 @@ Quintus.Objects = function(Q) {
                         newCapital = 0;
                         value = shop.maxCapital;
                     }
-                    let newCost = BG.MapController.generateShopCost(shop.initialValue, shop.rank, shop.investedCapital + value, Q.MapController.getShopsOwnedInDistrict(state, shop).length);
+                    let newCost = BG.MapController.generateShopCost(shop.initialValue, shop.rank, shop.investedCapital + value, BG.MapController.getShopsOwnedInDistrict(state, shop).length);
                     td.valueText.text.p.label =  (shop.initialValue * shop.rank + shop.investedCapital + value) + " G";
                     td.pricesText.text.p.label = newCost + " G";
                     td.capitalText.text.p.label = newCapital + " G";
@@ -627,7 +653,7 @@ Quintus.Objects = function(Q) {
         let state = BG.state;
         let dialogueBox = stage.insert(new Q.StandardMenu({x: Q.width / 2 - 350, y:Q.height - 210, w: 700, h: 200}));
         let textArea = dialogueBox.insert(new Q.UI.Container({x:10, y:10, cx:0, cy:0, w:490, h:180}));
-        let optionsArea = dialogueBox.insert(new Q.MenuButtonContainer({x:510, y:5, cx:0, cy:0, w:185, h:190}));
+        let optionsArea = dialogueBox.insert(new Q.MenuButtonContainer({x:510, y:5, cx:0, cy:0, w:185, h:190, selected: state.menus[0].data.selected || [0, 0]}));
         state.menus[0].currentCont = optionsArea;
         if(state.menus[0].data.onLoadMenu) state.menus[0].data.onLoadMenu(stage);
         
@@ -647,15 +673,13 @@ Quintus.Objects = function(Q) {
             textArea.p.text.on("doneScrolling", processDialogue);
             state.menus[0].currentCont = textArea.p.text[0];
             
+            let maxShown = 5;
             if(!dialogue[idx + 1]){
                 state.menus[0].currentCont = optionsArea;
-                state.menus[0].currentCont.displayOptions(state.menus[0].data.onHoverOption);
+                state.menus[0].currentCont.displayOptions(state.menus[0].data.onHoverOption, maxShown);
             }
         }
         processDialogue();
-        let selected = state.menus[0].data.selected  || [0, 0];
-        
-        state.menus[0].currentCont.p.menuButtons[selected[1]][selected[0]].hover();
     });
     
     Q.scene("menu", function(stage){
@@ -664,7 +688,7 @@ Quintus.Objects = function(Q) {
         let options = state.menus[0].itemGrid;
         let menuBox = stage.insert(new Q.UI.Container({x: 50, y:50, w: 195, h: options.length * 40 + 15 , cx:0, cy:0, fill: BG.OptionsController.options.menuColor, opacity:0.8, border:1}));
         
-        let optionsArea = menuBox.insert(new Q.MenuButtonContainer({x:5, y:5, cx:0, cy:0, w:menuBox.p.w - 10, h:menuBox.p.h - 10, fill: BG.OptionsController.options.menuColor}));
+        let optionsArea = menuBox.insert(new Q.MenuButtonContainer({x:5, y:5, cx:0, cy:0, w:menuBox.p.w - 10, h:menuBox.p.h - 10, fill: BG.OptionsController.options.menuColor, selected: state.menus[0].data.selected || [0, 0]}));
         state.menus[0].currentCont = optionsArea;
         state.menus[0].currentCont.displayOptions();
         state.menus[0].currentCont.p.menuButtons[selected[1]][selected[0]].hover();

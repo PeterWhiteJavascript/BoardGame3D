@@ -13,11 +13,13 @@
         {
             "name": "25% off Coupon",
             "desc": "Get 25% off the purchase of a shop.",
-            "usable": false
+            "usable": false,
+            "discount": 0.25
         },{
             "name": "50% off Coupon",
             "desc": "Get 50% off the purchase of an shop.",
-            "usable": false
+            "usable": false,
+            "discount": 0.50
         },{
             "name": "Extra Die",
             "desc": "Get 1 extra roll this turn.",

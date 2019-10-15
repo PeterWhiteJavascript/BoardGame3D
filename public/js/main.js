@@ -288,6 +288,9 @@ $(function(){
                             BG.GameController.purchaseSetItem(state, r.loc, player.p.playerId);
                             BG.AudioController.playSound("purchase-item");
                             break;
+                        case "exchangeItem":
+                            BG.GameController.exchangeItem(state, r.itemNeeded, r.exchangeFor, player.p.playerId);
+                            break;
                         case "purchaseItem":
                             BG.GameController.purchaseItem(state, r.item, r.cost, player.p.playerId);
                             break;

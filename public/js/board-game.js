@@ -5,7 +5,7 @@ var boardGameCore = function(exportTarget, key){
         BG.setUpPlayers = function(data, mainTile){
             let players = [];
             for(let i = 0; i < data.users.length; i++){
-                let loc = [0, 8]; //[mainTile.loc[0], mainTile.loc[1]]
+                let loc = [2, 6]; //[mainTile.loc[0], mainTile.loc[1]]
                 let player = BG.GameController.createObject(
                     "Player", 
                     {
@@ -16,7 +16,7 @@ var boardGameCore = function(exportTarget, key){
                     {
                     playerId: data.users[i].id,
                     name: "Player " + data.users[i].id,
-                    loc: [0, 8],
+                    loc: loc,
                     money: data.mapData.modes[data.settings.mode].startMoney,
                     netValue: data.mapData.modes[data.settings.mode].startMoney,
                     color: data.users[i].color,
@@ -32,6 +32,7 @@ var boardGameCore = function(exportTarget, key){
                 players.push(player);
                 //TEMP to give free warp
                 player.p.items.push("Warp");
+                player.p.items.push("Hops");
             }
             return players;
         };
@@ -92,7 +93,6 @@ var boardGameCore = function(exportTarget, key){
                     if(difY < 0) dir = [0, 2];
                     else dir = [0, -2];
                 }
-                console.log(difX, difY)
                 return dir;
             },
             getDeepValue: function(obj, path){
@@ -242,7 +242,6 @@ var boardGameCore = function(exportTarget, key){
                     case "vendor":
                         //There can be 0, 1, or 2 options.
                         let options = [];
-                        
                         //If the vendor has an exchange, figure out if the player has the item to exchange.
                         if(tile.exchange){
                             //For exchanges, needed is always an item.
@@ -266,6 +265,7 @@ var boardGameCore = function(exportTarget, key){
                                 BG.MenuController.makeMenu(state, {
                                     menu: "askVendorHereFor",
                                     text: text, 
+                                    tileText: tile.text,
                                     display: "dialogue",
                                     tile: tile
                                 });
@@ -275,6 +275,7 @@ var boardGameCore = function(exportTarget, key){
                                 BG.MenuController.makeMenu(state, {
                                     menu: "askVendorBuyItem",
                                     text: text, 
+                                    tileText: tile.text,
                                     display: "dialogue",
                                     item: tile.purchase
                                 });
@@ -284,6 +285,7 @@ var boardGameCore = function(exportTarget, key){
                                 BG.MenuController.makeMenu(state, {
                                     menu: "askVendorExchangeItem",
                                     text: text, 
+                                    tileText: tile.text,
                                     display: "dialogue",
                                     item: tile.exchange
                                 });
@@ -306,7 +308,10 @@ var boardGameCore = function(exportTarget, key){
                         BG.GameController.addBoardAction(state, "prev", "changeBonusPool", [state], [tollAmount]);
                         break;
                     case "stockbroker":
-                        //TODO: buy stock
+                        BG.MenuController.makeMenu(state, {
+                            menu: "askIfBuyingStock",
+                            display: "dialogue"
+                        });
                         break;
                 }
             },
@@ -753,6 +758,8 @@ var boardGameCore = function(exportTarget, key){
                         };  
                         break;
                 }
+                state.menus[0].data.menu = menu;
+                
                 return {func: "makeCustomMenu", menu: menu, props: props};
             },
             clearMenus: function(state, type){
@@ -1067,6 +1074,76 @@ var boardGameCore = function(exportTarget, key){
                         return props;
                     }
                 },
+                askVendorHereFor: {
+                    func: "navigateMenu",
+                    text: ["What are you here for?"],
+                    options:[
+                        ["Purchase", "confirmPurchase"],
+                        ["Exchange", "confirmExchange"],
+                        ["Nothing", "confirmFalse"]
+                    ],
+                    preDisplay: (state) => {
+                        //If the item is free, change purchase text.
+                    },
+                    confirmPurchase: (state) => {
+                        return BG.MenuController.makeMenu(state, {
+                            menu: "askVendorBuyItem",
+                            text: [state.menus[0].data.tileText.p], 
+                            tileText: state.menus[0].data.tileText,
+                            display: "dialogue",
+                            item: state.menus[0].data.tile.purchase
+                        });
+                    },
+                    confirmExchange: (state) => {
+                        return BG.MenuController.makeMenu(state, {
+                            menu: "askVendorExchangeItem",
+                            text: [state.menus[0].data.tileText.e], 
+                            tileText: state.menus[0].data.tileText,
+                            display: "dialogue",
+                            item: state.menus[0].data.tile.exchange
+                        });
+                    },
+                    confirmFalse: (state) => {
+                        let props = [{func: "clearStage", num: 2}];
+                        let move = BG.GameController.checkFinishMove(state, state.turnOrder[0]);
+                        if(move){
+                            props.push(move);
+                        }
+                        return props;
+                    }
+                },
+                askVendorExchangeItem: {
+                    func: "navigateMenu",
+                    text: [""],
+                    options:[
+                        ["Yes", "confirmTrue"],
+                        ["No", "confirmFalse"]
+                    ],
+                    preDisplay: (state) => {
+                        let dollarString = Number.isInteger(state.menus[0].data.item[1]) ? "G" : "";
+                        state.menus[0].data.text = ["Would you like to exchange your \n" + state.menus[0].data.item[0] + " for " + state.menus[0].data.item[1] + dollarString + "?"];
+                    },
+                    confirmTrue: (state) => {
+                        let itemNeeded = state.menus[0].data.item[0];
+                        let exchangeFor = state.menus[0].data.item[1];
+                        BG.GameController.exchangeItem(state, itemNeeded, exchangeFor, state.turnOrder[0].p.playerId);
+                        let props = [
+                            {func: "exchangeItem", itemNeeded: itemNeeded, exchangeFor: exchangeFor},
+                            {func: "clearStage", num: 2}
+                        ];
+                        let finish = BG.GameController.checkFinishMove(state, state.turnOrder[0]);
+                        if(finish) props = props.concat(finish);
+                        return props;
+                    },
+                    confirmFalse: (state) => {
+                        let props = [{func: "clearStage", num: 2}];
+                        let move = BG.GameController.checkFinishMove(state, state.turnOrder[0]);
+                        if(move){
+                            props.push(move);
+                        }
+                        return props;
+                    }
+                },
                 askVendorBuyItem: {
                     func: "navigateMenu",
                     options:[
@@ -1342,7 +1419,12 @@ var boardGameCore = function(exportTarget, key){
                         return BG.MenuController.makeCustomMenu(state, "buyStockMenu", {type: "buyStock", prev: ["askIfBuyingStock", [0, 0]], selected: 0});
                     },
                     confirmFalse: (state) => {
-                        return BG.GameController.checkFinishMove(state, state.turnOrder[0]);
+                        let props = [{func: "clearStage", num: 2}];
+                        let move = BG.GameController.checkFinishMove(state, state.turnOrder[0]);
+                        if(move){
+                            props.push(move);
+                        }
+                        return props;
                     }
                     
                 },
@@ -1366,7 +1448,8 @@ var boardGameCore = function(exportTarget, key){
                                 BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, district], [stockNumber, stockCost]);
                                 
                                 let props = [
-                                    {func: "finalizeBuyStock", num: stockNumber, cost: stockCost, district: district.id, playerId: player.p.playerId}
+                                    {func: "finalizeBuyStock", num: stockNumber, cost: stockCost, district: district.id, playerId: player.p.playerId},
+                                    {func: "clearStage", num: 2}
                                 ];
                                 let finish = BG.GameController.checkFinishMove(state, state.turnOrder[0]);
                                 if(finish) props = props.concat(finish);
@@ -1375,7 +1458,7 @@ var boardGameCore = function(exportTarget, key){
                         }
                     },  
                     goBack: (state) => {
-                        return BG.MenuController.makeCustomMenu(state, "buyStockMenu", {type: "buyStock", prev: ["askIfBuyingStock", [0, 0]], selected: [0, state.menus[0].data.district.id]})
+                        return BG.MenuController.makeCustomMenu(state, "buyStockMenu", {type: "buyStock", prev: ["askIfBuyingStock", [0, 0]], selected: [0, state.menus[0].data.district.id]});
                     }
                 },
                 sellStockCyclerMenu: {
@@ -1792,24 +1875,27 @@ var boardGameCore = function(exportTarget, key){
                     func: "navigateMenu",
                     text: ["Would you like to buy this shop?"],
                     preDisplay: (state) => {
-                        //id 0 is for 25% off
-                        let coupon = BG.GameController.playerHasItem(state, state.turnOrder[0], 0);
-                        if(coupon.length){
-                            state.menus[0].itemGrid.splice(1, 0, [["Yes (with 25% off coupon)", "confirmTrue", [0]]]);
+                        let coupon25 = state.turnOrder[0].hasItem("25% off Coupon");
+                        if(coupon25){
+                            state.menus[0].itemGrid.splice(1, 0, [["Use 25% off coupon", "confirmTrue", ["25% off Coupon"]]]);
+                        }
+                        let coupon50 = state.turnOrder[0].hasItem("50% off Coupon");
+                        if(coupon50){
+                            state.menus[0].itemGrid.splice(1, 0, [["Use 50% off coupon", "confirmTrue", ["50% off Coupon"]]]);
                         }
                     },
                     options:[
                         ["Yes", "confirmTrue"],
                         ["No", "confirmFalse"]
                     ],
-                    confirmTrue: (state, couponId) => {
+                    confirmTrue: (state, couponItemName) => {
                         let player = state.turnOrder[0];
                         let couponValue = 0;
                         let itemIdx = -1;
-                        if(couponId >= 0){
-                            itemIdx = player.p.items.indexOf(player.p.items.find((item) => {return item.id === couponId;}));
+                        if(couponItemName){
+                            itemIdx = player.p.items.indexOf(player.p.items.find((item) => {return item === couponItemName;}));
                             player.p.items.splice(itemIdx, 1);
-                            couponValue = couponId === 0 ? 0.25 : 0;
+                            couponValue = BG.GameController.getItemData(couponItemName).discount;
                         }
                         let tileOn = BG.MapController.getTileAt(state, player.p.loc);
                         BG.GameController.buyShop(state, player, tileOn, couponValue);
@@ -2020,11 +2106,8 @@ var boardGameCore = function(exportTarget, key){
 
             },
             setMenuPosition: function(state, coord){
+                if(state.menus[0].currentCont) state.menus[0].currentCont.hoverButton(coord);
                 state.menus[0].currentItem = coord;
-                if(state.menus[0].currentCont){
-                    state.menus[0].currentCont.p.menuButtons[state.menus[0].currentItem[1]][state.menus[0].currentItem[0]].hover();
-                    BG.AudioController.playSound("option-hover");
-                }
             },
             adjustMenuPosition: function(state, coord){
                 let currentItem = state.menus[0].currentItem;
@@ -2157,11 +2240,6 @@ var boardGameCore = function(exportTarget, key){
                     return e.name === effect;
                 }).length;
             },
-            playerHasItem: function(state, player, itemIdx){
-                return player.p.items.filter((itm) => {
-                    return itm.id === itemIdx;
-                });
-            },
             getItemData: function(itemName){
                 return BG.c.items.find((itm) => {return itm.name === itemName;});
             },
@@ -2215,7 +2293,7 @@ var boardGameCore = function(exportTarget, key){
                 let player = state.turnOrder[0];
                 
                 let item = BG.GameController.getItemData(player.p.items[itemIdx]);
-                if(item.usable){
+                if(item && item.usable){
                     /* Delayed use items (add an item effect for activation later) */
                     /* Extra Die
                      * Double Turn
@@ -2276,6 +2354,19 @@ var boardGameCore = function(exportTarget, key){
                 BG.GameController.addBoardAction(state, "prev", "changePlayerEXP", [player], [50]);
                 BG.GameController.addBoardAction(state, "prev", "changeBonusPool", [player], [-bonus]);
 
+            },
+            exchangeItem: function(state, itemNeeded, exchangeFor, playerId){
+                let player = BG.GameController.getPlayer(state, playerId);
+                BG.GameController.addBoardAction(state, "prev", "changePlayerItem", [player, itemNeeded], [-1]);
+                //Exchanging for money
+                if(Number.isInteger(exchangeFor)){
+                    BG.GameController.addBoardAction(state, "prev", "changePlayerMoney", [player], [exchangeFor]);
+                    BG.GameController.addBoardAction(state, "prev", "changePlayerNetValue", [player], [exchangeFor]);
+                } 
+                //Exchanging for an item.
+                else {
+                    BG.GameController.addBoardAction(state, "prev", "changePlayerItem", [player, exchangeFor], [1]);
+                }
             },
             purchaseItem: function(state, itemName, itemCost, playerId){
                 let player = BG.GameController.getPlayer(state, playerId);
@@ -2857,7 +2948,7 @@ var boardGameCore = function(exportTarget, key){
                     }
                 };
                 this.hasItem = function(itemName){
-                    return this.p.items.find((itm) => {return itm.name === itemName;});
+                    return this.p.items.find((itm) => {return itm === itemName;});
                 };
             },
             DirectionArrow: function(position, props){

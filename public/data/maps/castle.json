@@ -35,7 +35,8 @@
             "p": ["Bread", 1000],
             "text": {
                 "e": "I'll give you some bread for your wheat.",
-                "p": "Want to buy some bread?"
+                "p": "Want to buy some bread?",
+                "b": "What are you here for?"
             }
         },
         {
@@ -89,7 +90,8 @@
             "p": ["Wine", 1000],
             "text": {
                 "e": "I'll give you some wine for your grapes.",
-                "p": "Want to buy some wine?"
+                "p": "Want to buy some wine?",
+                "b": "What are you here for?"
             }
         },
         {
@@ -392,7 +394,8 @@
             "p": ["Hops", 0],
             "text": {
                 "e": "Can I buy that beer from you?",
-                "p": "Have some hops."
+                "p": "Have some hops.",
+                "b": "What are you here for?"
             }
         },
         {
@@ -507,7 +510,8 @@
             "p": ["Wheat", 0],
             "text": {
                 "e": "Can I buy that bread from you?",
-                "p": "Have some wheat."
+                "p": "Have some wheat.",
+                "b": "What are you here for?"
             }
         },
         {
@@ -721,7 +725,8 @@
             "p": ["Grapes", 0],
             "text": {
                 "e": "Would you sell me your wine?",
-                "p": "Would you like some grapes?"
+                "p": "Would you like some grapes?",
+                "b": "What are you here for?"
             }
         },
         {
