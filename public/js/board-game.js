@@ -1403,7 +1403,9 @@ var boardGameCore = function(exportTarget, key){
                         } else {
                             return [
                                 {func: "clearStage", num: 3},
-                                BG.MenuController.makeMenu(state, {menu: state.menus[0].data.prev[0], selected: state.menus[0].data.prev[1], sound: "change-menu", display: "dialogue"})
+                                BG.MenuController.makeMenu(state, {menu: "stocksMenu", selected: [0, 0], sound: "change-menu", display: "menu"})
+                                //Not sure what this next line was for.
+                                //BG.MenuController.makeMenu(state, {menu: state.menus[0].data.prev[0], selected: state.menus[0].data.prev[1], sound: "change-menu", display: "dialogue"})
                             ];
                         }
                     }
@@ -1502,7 +1504,7 @@ var boardGameCore = function(exportTarget, key){
                         return BG.MenuController.inputStates.checkStockMenu.goBack(state);
                     },
                     goBack: (state) => {
-                        return BG.MenuController.makeMenu(state, {menu: "stockMenu", selected: [0, 2], sound: "change-menu", display: "menu"});
+                        return BG.MenuController.makeMenu(state, {menu: "stocksMenu", selected: [0, 1], sound: "change-menu", display: "menu"});
                     }
                 },
                 itemsMenu: {

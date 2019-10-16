@@ -143,7 +143,6 @@ $(function(){
                     BG.ObjectData[split[split.length - 1]] = obj;
                 });
             });
-            console.log(BG.ObjectData)
         }
         
         loadFiles(connectionData.loadFiles, function(){

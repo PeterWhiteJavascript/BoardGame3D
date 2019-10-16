@@ -851,7 +851,7 @@ Quintus.Objects = function(Q) {
         let digits = stage.options.cycler;
         let currentItem = stage.options.currentItem || [digits - 1, 0];
         let district = BG.state.map.districts[stage.options.district];
-        let menuBox = stage.insert(new Q.StandardMenu({x: Q.width / 2 - 350, y: Q.height / 2 - 250, w: 700, h: 500}));
+        let menuBox = stage.insert(new Q.StandardMenu({x: Q.width / 2 - 350, y: Q.height / 2 - 250, w: 800, h: 500}));
         menuBox.insert(new Q.StandardText({x: menuBox.p.w / 2, y: 30, label: "Sell stock in " + district.name, align: "middle"}));
         stage.numberCycler = menuBox.insert(new Q.NumberCycler({digits: digits, x: menuBox.p.w / 2, y: 100}));
         stage.numberCycler.p.menuButtons[currentItem[0]][currentItem[1]].selected();
@@ -863,12 +863,12 @@ Quintus.Objects = function(Q) {
         let players = BG.state.players;
         let districts = BG.state.map.districts;
         
-        let menuBox = stage.insert(new Q.StandardMenu({x: Q.width / 2 - 350, y: Q.height / 2 - 250, w: 700, h: 500}));
+        let menuBox = stage.insert(new Q.StandardMenu({x: Q.width / 2 - 350, y: Q.height / 2 - 250, w: 700, h: 600}));
         let table = menuBox.insert(new Q.UI.Container({x: 10, y: 10, w: menuBox.p.w - 20, h: menuBox.p.h - 20, fill: "grey", cx: 0, cy:0}));        
         let sx = 75;
         let sy = 10;
         let tw = 100;
-        let th = 80;
+        let th = 40;
         table.insert(new Q.UI.Text({label: "Mx. ST", x: sx + tw, y: sy}));
         table.insert(new Q.UI.Text({label: "Avail.", x: sx + tw * 2, y: sy}));
         table.insert(new Q.UI.Text({label: "Value", x: sx + tw * 3, y: sy}));
@@ -888,7 +888,7 @@ Quintus.Objects = function(Q) {
             for(let j = 0; j < players.length; j++){
                 let p = players[j];
                 //Create an entry for each player starting after the stock cost column.
-                table.insert(new Q.UI.Text({label: "" + p.stocks[i].num, x: sx + tw * (j + 4), y: colY}));
+                table.insert(new Q.UI.Text({label: "" + p.p.stocks[i], x: sx + tw * (j + 4), y: colY}));
             }
         }
     });
