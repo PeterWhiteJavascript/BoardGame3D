@@ -69,10 +69,10 @@ var boardGameCore = function(exportTarget, key){
                 }
             },
             convertCoordToDir: function(coord){
-                if(coord[0] === 2) return "right";
-                if(coord[0] === -2) return "left";
                 if(coord[1] === 2) return "down";
                 if(coord[1] === -2) return "up";
+                if(coord[0] === 2) return "right";
+                if(coord[0] === -2) return "left";
             },
             getOppositeDir: function(dir){
                 switch(dir){
@@ -85,13 +85,14 @@ var boardGameCore = function(exportTarget, key){
             compareLocsForDirection: function(loc1, loc2){
                 let difX = loc1[0] - loc2[0];
                 let difY = loc1[1] - loc2[1];
-                let dir;
+                let dir = [0, 0];
                 if(difX > 1 || difX < -1){
-                    if(difX < 0) dir = [2, 0];
-                    else dir = [-2, 0];
-                } else {
-                    if(difY < 0) dir = [0, 2];
-                    else dir = [0, -2];
+                    if(difX < 0) dir[0] = 2;
+                    else dir[0] = -2;
+                }
+                if (difY > 1 || difY < -1) {
+                    if(difY < 0) dir[1] = 2;
+                    else dir[1] = -2;
                 }
                 return dir;
             },
@@ -218,6 +219,7 @@ var boardGameCore = function(exportTarget, key){
                 actionsIdxs.reverse().forEach((idx) => {boardActions.splice(idx, 1);});
             },
             //Checks if anything should happen when this player passes by this tile (also occurs if he lands on the tile).
+            //Return true if we don't want to move to the next action (end turn or next step)
             checkPassByTile: function(state, player){
                 let tile = player.p.tileTo;
                 switch(tile.type){
@@ -312,7 +314,7 @@ var boardGameCore = function(exportTarget, key){
                             menu: "askIfBuyingStock",
                             display: "dialogue"
                         });
-                        break;
+                        return true;
                 }
             },
             //Run when the player presses a directional input while moving their dice roll.
@@ -519,15 +521,7 @@ var boardGameCore = function(exportTarget, key){
                 function generateDistrictValues(districts){
                     for(let i = 0; i < districts.length; i++){
                         let district = districts[i];
-                        for(let j = 0; j < district.tiles.length; j++){
-                            let tile = district.tiles[j];
-                            district.totalRanks += tile.rank;
-                            district.value += tile.value;
-                        }
-                        district.rank = ~~(district.totalRanks / district.tiles.length);
-                        //For every 250 value, the stock price is 1G
-                        //For every 1 rank, add 5G
-                        district.stockPrice = Math.ceil(district.value / 250) + district.rank * 5;
+                        BG.GameController.updateDistrictValues(district);
                         //The number of stock available is equal to the district value / 10
                         district.stockAvailable = Math.ceil(district.value / 10);
                         district.totalStock = district.stockAvailable;
@@ -1256,7 +1250,7 @@ var boardGameCore = function(exportTarget, key){
                             for(let i = 0; i < rolls; i++){
                                 let num = ~~(state.random() * (dieMax + 1 - dieMin)) + dieMin;
                                 roll += num;
-                                roll = 2;
+                                roll = 1;
                                 rollsNums.push(num);
                             }
                             state.currentMovementNum = roll;
@@ -1447,10 +1441,10 @@ var boardGameCore = function(exportTarget, key){
                             if(stockNumber === 0){
                                 return BG.MenuController.inputStates.buyStockCyclerMenu.goBack(state);
                             } else {
-                                BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, district], [stockNumber, stockCost]);
+                                BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, district], [stockNumber, -stockCost]);
                                 
                                 let props = [
-                                    {func: "finalizeBuyStock", num: stockNumber, cost: stockCost, district: district.id, playerId: player.p.playerId},
+                                    {func: "finalizeBuyStock", num: stockNumber, cost: -stockCost, district: district.id, playerId: player.p.playerId},
                                     {func: "clearStage", num: 2}
                                 ];
                                 let finish = BG.GameController.checkFinishMove(state, state.turnOrder[0]);
@@ -1479,8 +1473,8 @@ var boardGameCore = function(exportTarget, key){
                             if(stockNumber === 0){
                                 return BG.MenuController.inputStates.sellStockCyclerMenu.goBack(state);
                             } else {
-                                let response = [{func: "finalizeSellStock", num: stockNumber, cost: stockCost, district: state.menus[0].data.district.id, playerId: player.p.playerId}];
-                                BG.GameController.sellStock(player, stockNumber, stockCost, district);
+                                let response = [{func: "finalizeSellStock", num: -stockNumber, cost: stockCost, district: state.menus[0].data.district.id, playerId: player.p.playerId}];
+                                BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, district], [-stockNumber, stockCost]);
                                 if(state.forceSellAssets){
                                     if(player.p.money >= 0){
                                         response.push(BG.GameController.endTurn(state));
@@ -1528,7 +1522,6 @@ var boardGameCore = function(exportTarget, key){
                     options:[
                         ["View Board", "viewBoard"],
                         ["View Map", "viewMap"],
-                        ["View Sets", "viewSets"],
                         ["View Standings", "viewStandings"],
                         ["Back", "goBack"]
                     ],
@@ -1539,11 +1532,8 @@ var boardGameCore = function(exportTarget, key){
                     viewMap: (state) => {
                         return BG.MenuController.makeCustomMenu(state, "mapMenu");
                     },
-                    viewSets: (state) => {
-                        return BG.MenuController.makeCustomMenu(state, "setsMenu");
-                    },
                     viewStandings: (state) => {
-
+                        
                     },
                     goBack: (state) => {
                         return BG.MenuController.makeMenu(state, {menu: "playerTurnMenu", selected: [0, 5], sound: "change-menu", display: "menu"});
@@ -2250,6 +2240,7 @@ var boardGameCore = function(exportTarget, key){
                 player.p.tileTo = tileTo;
                 state.currentMovementPath = [];
                 player.p.skipFinish = true;
+                player.p.finish = true;
                 if(!BG.Utility.isServer()){
                     player.moveTo(tileTo.loc);
                 }
@@ -2418,7 +2409,7 @@ var boardGameCore = function(exportTarget, key){
             changePlayerStock: function(player, district, num, price){
                 district.stockAvailable -= num;
                 player.p.stocks[district.id] += num;
-                BG.GameController.changePlayerMoney(player, -price);
+                BG.GameController.changePlayerMoney(player, price);
                 
             },
             changeBonusPool: function(state, amount){
@@ -2475,7 +2466,7 @@ var boardGameCore = function(exportTarget, key){
                 let scene = BG.scene;
                 for(let i = 0; i < rollsNums.length; i++){
                     let die = BG.GameController.createObject("Die", {
-                        x: playerPos.x + BG.c.tileW,
+                        x: playerPos.x + BG.c.tileW - rollsNums.length / 2 + i,
                         y: 2.88,
                         z: playerPos.z + BG.c.tileH
                     }, {roll: rollsNums[i]});
@@ -2650,7 +2641,7 @@ var boardGameCore = function(exportTarget, key){
                     case "bingo":
                         return BG.GameController.chooseBingoCard();//TODO
                     case "stockbroker":
-                        return BG.GameController.askBuyStock();//TODO
+                        return BG.GameController.endTurn(state);
                     case "arcade":
                         return BG.GameController.startArcade();//TODO
                     case "interest":
@@ -2766,7 +2757,7 @@ var boardGameCore = function(exportTarget, key){
                 BG.GameController.changePlayerMoney(player, -cost);
                 BG.GameController.changePlayerNetValue(player, couponValue);
                 shop.ownedBy = player;
-                BG.GameController.adjustShopValues(state, player, shop);
+                BG.GameController.adjustShopValues(state, shop);
                 player.p.shops.push(shop);//This needs to be reversable
                 if(!BG.Utility.isServer()){
                     shop.sprite.updateTile({type: "purchased", player: player});
@@ -2786,20 +2777,20 @@ var boardGameCore = function(exportTarget, key){
                 shop.ownedBy.p.shops.splice(shop.ownedBy.p.shops.indexOf(shop), 1);
                 shop.ownedBy = player;
                 player.p.shops.push(shop);//This needs to be reversable
-                BG.GameController.adjustShopValues(state, player, shop);
-                BG.GameController.adjustShopValues(state, shop.ownedBy, shop);
+                BG.GameController.adjustShopValues(state, shop);
+                BG.GameController.adjustShopValues(state, shop);
             },
             sellShop: function(state, shop, price, sellTo){
                 BG.GameController.changePlayerMoney(shop.ownedBy, price);
                 BG.GameController.changePlayerNetValue(shop.ownedBy, -shop.value + price);
-                BG.GameController.adjustShopValues(state, shop.ownedBy, shop);
+                BG.GameController.adjustShopValues(state, shop);
                 shop.ownedBy.p.shops.splice(shop.ownedBy.p.shops.indexOf(shop), 1);
 
                 shop.ownedBy = sellTo;
                 if(shop.ownedBy){
                     BG.GameController.changePlayerMoney(shop.ownedBy, -price);
                     BG.GameController.changePlayerNetValue(shop.ownedBy, -price + shop.value);
-                    BG.GameController.adjustShopValues(state, shop.ownedBy, shop);
+                    BG.GameController.adjustShopValues(state, shop);
 
                 } else {
                     shop.cost = BG.MapController.generateShopCost(shop.initialValue, shop.rank, shop.investedCapital, 1);
@@ -2813,15 +2804,12 @@ var boardGameCore = function(exportTarget, key){
                 }
             },
             //Changes the value of shops in the district based on the number that the player owns.
-            adjustShopValues: function(state, player, shop){
-                let shopsOwned = BG.MapController.getShopsOwnedInDistrict(state, shop);
+            //This is done when buying a shop.
+            adjustShopValues: function(state, curShop){
+                let shopsOwned = BG.MapController.getShopsOwnedInDistrict(state, curShop);
                 if(shopsOwned.length > 1){
                     shopsOwned.forEach((shop) => {
-                        shop.cost = BG.MapController.generateShopCost(shop.initialValue, shop.rank, shop.investedCapital, shopsOwned.length);
-                        shop.maxCapital = BG.MapController.generateShopMaxCapital(shop.initialValue, shop.rank, shop.investedCapital);
-                        if(!BG.Utility.isServer()){
-                            shop.sprite.updateTile({type: "value"});
-                        }
+                        BG.GameController.updateShopValues(state, shop);
                     });
                 }
             },
@@ -2830,11 +2818,28 @@ var boardGameCore = function(exportTarget, key){
                 let shopsOwned = shop.ownedBy ? BG.MapController.getShopsOwnedInDistrict(state, shop).length : 1;
                 shop.value = BG.MapController.generateShopValue(shop.initialValue, shop.rank, shop.investedCapital);
                 shop.cost = BG.MapController.generateShopCost(shop.initialValue, shop.rank, shop.investedCapital, shopsOwned);
-                shop.maxCapital = BG.MapController.generateShopMaxCapital(state.menus[0].data.shop.initialValue, state.menus[0].data.shop.rank, state.menus[0].data.shop.investedCapital);
+                shop.maxCapital = BG.MapController.generateShopMaxCapital(shop.initialValue, shop.rank, shop.investedCapital);
+                //Update the district's stock price.
+                BG.GameController.updateDistrictValues(state.map.districts[shop.district]);
                 if(!BG.Utility.isServer()){
                     shop.sprite.updateTile({type: "value"});
-                    BG.GameController.tileDetails.displayShop(shop);
                 }
+            },
+            updateDistrictValues: function(district){
+                let ranks = 0;
+                let value = 0; 
+                for(let j = 0; j < district.tiles.length; j++){
+                    let tile = district.tiles[j];
+                    ranks += tile.rank;
+                    value += tile.value;
+                }
+                //The district rank is the average rank of all tiles in the district.
+                district.rank = ~~(ranks / district.tiles.length);
+                //For every 250 value, add 1G
+                //For every 1 rank, add 5G
+                district.stockPrice = Math.ceil(value / 250) + district.rank * 5;
+                district.totalRanks = ranks;
+                district.value = value;
             },
             investInShop: function(state, investAmount){
                 if(!investAmount) return;
@@ -2904,30 +2909,30 @@ var boardGameCore = function(exportTarget, key){
                     let dirs = tileOn.dirs ? tileOn.dirs.slice() : Object.keys(tileOn.dir);
                     //Force the player to continue along the path that they were on from last turn.
                     if(BG.state.currentMovementPath.length <= 1) {
-                        let lastTile = BG.state.turnOrder[0].p.lastTile;
-                        if(lastTile){
-                            dirs.forEach((dir, i) => {
-                                let loc = BG.Utility.convertDirToCoord(dir);
-                                if(tileOn.loc[0] + loc[0] === lastTile.loc[0] && tileOn.loc[1] + loc[1] === lastTile.loc[1]) dirs.splice(i, 1);
-                            });
-                        }
-                    }
-                    //Check all potential tiles and make sure that if any of them are one-way, don't allow this tile to go there.
-                    for(let i = dirs.length -1; i >= 0; i--){
-                        let dir = dirs[i];
-                        let tile = tileOn.dir[dir];
-                        if(tile && (!lastTile || !BG.Utility.locsMatch(lastTile.loc, tile.loc))){
-                            let toDir = BG.Utility.convertCoordToDir(BG.Utility.compareLocsForDirection(tile.loc, tileOn.loc));
-                            if(tile.dirs && tile.dirs.includes(toDir)){
+                        lastTile = this.p.lastTile;
+                        for(let i = dirs.length - 1; i >= 0; i--){
+                            if(tileOn.dir[dirs[i]] === lastTile){
                                 dirs.splice(i, 1);
                             }
+                        };
+                    } else {
+                        //Check all potential tiles and make sure that if any of them are one-way, don't allow this tile to go there.
+                        for(let i = dirs.length -1; i >= 0; i--){
+                            let dir = dirs[i];
+                            let tile = tileOn.dir[dir];
+                            if(tile && (!lastTile || !BG.Utility.locsMatch(lastTile.loc, tile.loc))){
+                                let toDir = BG.Utility.convertCoordToDir(BG.Utility.compareLocsForDirection(tile.loc, tileOn.loc));
+                                if(tile.dirs && tile.dirs.includes(toDir)){
+                                    dirs.splice(i, 1);
+                                }
+                            }
                         }
-                    }
-                    //Allow going back if it's the last tile
-                    if(tileOn.dirs){
-                        if(lastTile){
-                            let allowDir = BG.Utility.convertCoordToDir(BG.Utility.compareLocsForDirection(tileOn.loc, lastTile.loc));
-                            dirs.push(allowDir);
+                        //Allow going back if it's the last tile
+                        if(tileOn.dirs){
+                            if(lastTile){
+                                let allowDir = BG.Utility.convertCoordToDir(BG.Utility.compareLocsForDirection(tileOn.loc, lastTile.loc));
+                                dirs.push(allowDir);
+                            }
                         }
                     }
                     for(let i = 0; i < dirs.length; i++){

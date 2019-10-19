@@ -112,7 +112,7 @@ Quintus.Objects = function(Q) {
                     this.p.menuButtons[i].push(button);
                 }
             }
-            this.p.menuButtons[this.p.selected[1]][this.p.selected[0]].hover();
+            this.hoverButton(this.p.selected);
         },
         hoverButton: function(coord){
             let buttons = this.p.menuButtons;

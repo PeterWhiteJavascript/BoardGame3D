@@ -357,7 +357,7 @@ $(function(){
                             BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, state.map.districts[r.district]], [r.num, r.cost]);
                             break;
                         case "finalizeSellStock":
-                            BG.GameController.sellStock(BG.GameController.getPlayer(state, r.playerId), r.num, r.cost, state.map.districts[r.district]);
+                            BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, state.map.districts[r.district]], [r.num, r.cost]);
                             break;
                         case "addToDeal":
                             BG.GameController.addToDeal(state, r.props);
