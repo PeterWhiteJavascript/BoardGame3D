@@ -55,7 +55,7 @@ Server.prototype.addUserToGame = function(user, socket, room){
             map: map,
             settings:{
                 mode: "ffa",
-                numOfPlayers:1
+                numOfPlayers:2
             },
             mapData:this.mapsData[map]
         });

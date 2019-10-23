@@ -53,6 +53,7 @@ var boardGameCore = function(exportTarget, key){
                 state.initialSeed = randSeed;
                 state.turnOrder = state.players;//BG.Utility.shuffleArray(state.players);
             }
+            
             return state;
         };
 
@@ -1474,7 +1475,9 @@ var boardGameCore = function(exportTarget, key){
                                 return BG.MenuController.inputStates.sellStockCyclerMenu.goBack(state);
                             } else {
                                 let response = [{func: "finalizeSellStock", num: -stockNumber, cost: stockCost, district: state.menus[0].data.district.id, playerId: player.p.playerId}];
-                                BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, district], [-stockNumber, stockCost]);
+                                BG.GameController.changePlayerStock(player, district, -stockNumber, stockCost)
+                                
+                                //BG.GameController.addBoardAction(state, "prev", "changePlayerStock", [player, district], [-stockNumber, stockCost]);
                                 if(state.forceSellAssets){
                                     if(player.p.money >= 0){
                                         response.push(BG.GameController.endTurn(state));
@@ -2530,6 +2533,7 @@ var boardGameCore = function(exportTarget, key){
             
             //TODO: test that PayBlock and Interest work with 3+ players.
             payOwnerOfShop: function(state, player, tileOn){
+                let district = tileOn.district;
                 let totalAmount = tileOn.cost;
                 //First, see if the player can block some of the amount owed with an item effect
                 if(BG.GameController.checkPlayerHasEffect(player, "PayBlock")){
@@ -2550,12 +2554,14 @@ var boardGameCore = function(exportTarget, key){
                 
                 //Tax the total amount
                 let tax = ~~(totalAmount * (tileOn.rank * 0.01));
+                //Add the tax to the bonus pool
+                BG.GameController.changeBonusPool(state, tax);
+                
                 //Here's the new value after tax is taken.
                 let amount = totalAmount - tax;
                 
                 //Give players interest that have the effect
                 let interestPlayers = BG.GameController.getAllPlayersWithEffect(state.turnOrder, "Interest");
-                console.log(interestPlayers);
                 //Interest is a percentage. It's organised by turn order, so the closer the player is to the active player, the more of the percentage they get.
                 interestPlayers.forEach((player) => {
                     let interestPercentage = 0;
@@ -2568,12 +2574,29 @@ var boardGameCore = function(exportTarget, key){
                     amount -= interestAmount;
                 });
                 
+                
+                //The total stocks available in the district (includes stock that has been bought)
+                let totalStock = state.map.districts[district].totalStock;
+                
+                //Once interest is given out, split 50% of the remaining amount between shareholders (player's who own stock in the district)
+                //If there are any stock that are not bought, they functionaly go to the shop owner.
+                let shareholderShare = ~~(amount / 2);
+                //Give the stockholders their share.
+                state.turnOrder.forEach((p) => {
+                    let sharePercent = p.p.stocks[district] / totalStock;
+                    let shareAmount = Math.round(sharePercent * shareholderShare);
+                    BG.GameController.changePlayerMoney(p, shareAmount);
+                    BG.GameController.changePlayerNetValue(p, shareAmount);
+                    
+                    //Reduce the final amount by the amount given to the shareholder.
+                    amount -= shareAmount;
+                });
+                
+                
                 //The owner of the shop gets his share after the interest is taken care of.
                 BG.GameController.changePlayerMoney(tileOn.ownedBy, amount);
                 BG.GameController.changePlayerNetValue(tileOn.ownedBy, amount);
                 
-                //Add the tax to the bonus pool
-                BG.GameController.changeBonusPool(state, tax);
                 return {func: "payOwnerOfShop", loc: tileOn.loc};
             },
             askToBuyShop: function(state, player, tileOn){
@@ -2717,9 +2740,11 @@ var boardGameCore = function(exportTarget, key){
                 player.p.tileTo = false;
                 player.p.skipFinish = false;
                 BG.GameController.reduceItemTurns(player);
+                
 
                 BG.preventMultipleInputs = true;
                 if(!state.doIt){
+                    //BG.GameController.changePlayerStock(state.players[1], state.map.districts[4], 60, -state.map.districts[4].stockPrice * 60)
                     //BG.GameController.buyShop(state, player, BG.MapController.getTileAt(state, [6, 4]), 1);
                     //BG.GameController.buyShop(state, state.turnOrder[0], BG.MapController.getTileAt(state, [6, 4]), 0)
                     //BG.GameController.buyStock(state.turnOrder[0], 10, state.map.districts[0].stockPrice * 10, state.map.districts[0]);
