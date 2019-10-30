@@ -69,6 +69,7 @@ $(function(){
             let objectFiles = files["images/3d"].filter((filename) => {let split = filename.split(".");if(split[split.length - 1] === "obj") { return filename;}});
             let gltfFiles = files["images/3d"].filter((filename) => {let split = filename.split(".");if(split[split.length - 1] === "gltf") { return filename;}});
             let imageFiles = files["images/2d"];
+            let uiFiles = files["images/ui"];
             let fontFiles = files["data/fonts"];
             let totalFiles = audioFiles.length + dataFiles.length + materialFiles.length + fontFiles.length + imageFiles.length;
             let loadedFiles = 0;
@@ -143,6 +144,11 @@ $(function(){
                     BG.ObjectData[split[split.length - 1]] = obj;
                 });
             });
+            //Load UI files with the Quintus loader are they are used in Quintus Sprites.
+            BG.Q.load(uiFiles, () => {
+                loadedFiles+= uiFiles.length;
+                checkFinished();
+            });
         }
         
         loadFiles(connectionData.loadFiles, function(){
@@ -207,6 +213,9 @@ $(function(){
                                     player.p.allowMovement = false;
                                     break;
                             }
+                            break;
+                        case "showHUD":
+                            BG.Q.stage(1).show();
                             break;
                         case "clearStage":
                             BG.Q.clearStage(r.num);
@@ -273,7 +282,6 @@ $(function(){
                             
                             break;
                         case "playerGoBackMove":
-                            BG.Q.clearStage(2);
                             r.func = "playerMovement";
                             player.p.finish = false;
                             BG.GameController.playerGoBackMove(state, player.p.playerId);

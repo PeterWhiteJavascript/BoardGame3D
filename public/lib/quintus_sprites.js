@@ -620,7 +620,7 @@ Quintus.Sprites = function(Q) {
       if(p.sheet) {
         this.sheet().draw(ctx,-p.cx,-p.cy,p.frame);
       } else if(p.asset) {
-        ctx.drawImage(Q.asset(p.asset),-p.cx,-p.cy);
+        ctx.drawImage(Q.asset(p.asset),-p.cx,-p.cy, p.w, p.h);
       } else if(p.color) {
         ctx.fillStyle = p.color;
         ctx.fillRect(-p.cx,-p.cy,p.w,p.h);

@@ -79,7 +79,7 @@ Quintus.Objects = function(Q) {
                 }
             }
         },
-        displayOptions: function(onHover, maxShown){
+        displayOptions: function(onHover, maxShown, textLines){
             let options = BG.state.menus[0].itemGrid;
             let cursor = new Q.Cursor();
             this.p.menuButtons = [];
@@ -89,7 +89,7 @@ Quintus.Objects = function(Q) {
                 let hidden = maxShown && i >= maxShown ? true : false;
                 this.p.menuButtons[i] = [];
                 for(let j = 0; j < options[i].length; j++){
-                    let button = menuButtonCont.insert(new Q.MenuButton({x: this.p.buttonSpacing, y: this.p.buttonSpacing + this.p.buttonH * i, w:this.p.w - this.p.buttonSpacing * 2, hidden: hidden, label: options[i][j][0], func: options[i][j][1], props:options[i][j][2], cursor: cursor}));
+                    let button = menuButtonCont.insert(new Q.MenuButton({x: this.p.buttonSpacing, y: this.p.buttonSpacing + this.p.buttonH * (i + textLines), w:this.p.w - this.p.buttonSpacing * 2, hidden: hidden, label: options[i][j][0], func: options[i][j][1], props:options[i][j][2], cursor: cursor}));
                     button.on("interactWith", function(){
                         this.removeContent();
                         //If there's no function, we're just cycling text.
@@ -199,6 +199,14 @@ Quintus.Objects = function(Q) {
             this.trigger("doneScrolling");
         }
     });
+    Q.Sprite.extend("SpriteStandardMenu", {
+        init: function(p){
+            this._super(p, {
+                cx:0, cy:0,
+                asset: "images/ui/district-background.png"
+            });
+        }
+    });
     Q.UI.Container.extend("StandardMenu", {
         init: function(p){
             this._super(p, {
@@ -208,6 +216,11 @@ Quintus.Objects = function(Q) {
                 opacity:0.8, 
                 border:1
             });
+            //this.on("inserted");
+        },
+        //Could be used to create a background image for this container.
+        inserted: function(){
+            this.insert(new Q.SpriteStandardMenu({w: this.p.w, h: this.p.h}));
         }
     });
     Q.UI.Text.extend("StandardText", {
@@ -292,31 +305,129 @@ Quintus.Objects = function(Q) {
             toHover.children[0].p.fill = "gold";
         }
     });
+    Q.Sprite.extend("StockPieChart", {
+        init: function(p){
+            this._super(p, {
+                w: 64,
+                h: 64
+            });
+            this.p.x -= this.p.w / 2;
+            this.p.y -= this.p.h / 2;
+        },
+        displayChart: function(data){
+            if(this.p.stockNums) this.p.stockNums.forEach((n) => {n.destroy();});
+            this.p.stockNums = [];
+            let players = BG.state.turnOrder;
+            let totalPi = Math.PI * 2;
+            let leftoverPi = totalPi;
+            let angles = [];
+            let degrees = [];
+            let points = [];
+            let stockAvail = [];
+            let colors = [];
+            players.forEach((player, i) => {
+                let num = player.p.stocks[data.id];
+                if(num){
+                    stockAvail.push(num);
+                    let percentTotal = num / data.totalStock;
+                    let amount = totalPi * percentTotal;
+                    angles.push(amount);
+                    leftoverPi -= amount;
+                    colors.push(player.p.color);
+                    //Between two points.
+                    let p1 = 0;
+                    if(i !== 0) p1 = points[points.length - 1];
+                    let p2 = percentTotal * 360;
+                    degrees.push(p1 + (p1 + p2) / 2 + 90);
+                    points.push(p2);
+                }
+            });
+            this.p.angles = angles;
+            this.p.colors = colors;
+            if(leftoverPi){
+                this.p.angles.push(leftoverPi);
+                if(!points.length){
+                    degrees.push(0);
+                } else {
+                    let p1 = points[points.length - 1];
+                    let p2 = 360;
+                    degrees.push((p1 + p2) / 2 + 90);
+                }
+                this.p.colors.push("white");
+                stockAvail.push(data.stockAvailable);
+            }
+            
+            let radius = this.p.w / 4;
+            let centerX = this.p.w / 2;
+            let centerY = this.p.h / 2;
+            for(let i = 0; i < stockAvail.length; i++){
+                let x = radius * Math.sin(degrees[i] * Math.PI / 180) + centerX;
+                let y = -radius * Math.cos(degrees[i] * Math.PI / 180) + centerY;
+                this.p.stockNums.push(this.container.insert(new Q.UI.Text({label: stockAvail[i] + "", x: this.p.x + x, y: this.p.y + y - 6, size: 12})));
+            }
+        },
+        draw: function(ctx){
+            // Colors
+            var colors = this.p.colors;
+            
+            // List of Angles
+            var angles = this.p.angles;
+
+            // Temporary variables, to store each arc angles
+            var beginAngle = 0;
+            var endAngle = 0;
+
+            // Iterate through the angles
+            for(var i = 0; i < angles.length; i = i + 1) {
+                // Begin where we left off
+                beginAngle = endAngle;
+                // End Angle
+                endAngle = endAngle + angles[i];
+
+                ctx.beginPath();
+                // Fill color
+                ctx.fillStyle = colors[i % colors.length];
+
+                // Same code as before
+                ctx.moveTo(this.p.w / 2, this.p.h / 2);
+                ctx.arc(this.p.w / 2, this.p.h / 2, this.p.w / 2, beginAngle, endAngle);
+                ctx.lineTo(this.p.w / 2, this.p.h / 2);
+                ctx.stroke();
+
+                // Fill
+                ctx.fill();
+            }
+        }
+    });
     Q.UI.Container.extend("MapMenu", {
         init: function(p){
             this._super(p, {
                 cx:0, cy:0,
-                w: Q.width / 2,
-                h: Q.height / 2,
-                x: Q.width / 4,
-                y: Q.height / 4, 
-                fill: BG.OptionsController.options.menuColor, 
-                opacity:0.8, 
-                border:1
+                w: Q.width,
+                h: Q.height,
+                x: 0,
+                y: 0
+               // border:1
             }); 
             this.on("inserted");
         },
         inserted: function(){
-            //TODO: size things based on actual map size to fit the screen better.
+            
+            let bgImgW = Q.width * 0.7;
+            let bgImgH = Q.height * 0.7;
+            
             let map = BG.state.map;
-            let mapObj = this.stage.insert(new Q.UI.Container({x: this.p.w, y: this.p.h, w: this.p.w - 20, h: this.p.h - 20, border: 1, fill: "#BBB"}));
+            let backgroundImage = this.insert(new Q.Sprite({x: this.p.w / 2, y: this.p.h / 2, asset: "images/ui/district-background.png", w: bgImgW, h: bgImgH}));
+            let mapObj = this.insert(new Q.UI.Container({x: this.p.w / 2, y: this.p.h / 2, fill: "transparent"}));
             let distance = 20;
+            let tileW = 24;
+            let tileH = 24;
             //Pulse the tile that the player is on
             let player = this.p.player;
             this.miniTiles = [];
             for(let i = 0; i < map.tiles.length; i++){
                 let tile = map.tiles[i];
-                let miniTile = mapObj.insert(new Q.UI.Container({x: (tile.loc[0] - map.centerX) * distance, y: (tile.loc[1] - map.centerY) * distance, w: 24, h: 24, fill: "transparent", radius: 1, border: 2, stroke: "black", district: tile.district}));
+                let miniTile = mapObj.insert(new Q.UI.Container({x: (tile.loc[0] - map.centerX) * distance + tileW, y: (tile.loc[1] - map.centerY) * distance + tileH, w: tileW, h: tileH, fill: "white", radius: 1, border: 2, stroke: "black", district: tile.district}));
                 miniTile.add("tween");
                 switch(tile.type){
                     case "main":
@@ -330,7 +441,7 @@ Quintus.Objects = function(Q) {
                         break;
                     case "shop":
                         if(tile.ownedBy){
-                            miniTile.p.fill = tile.ownedBy.color;
+                            miniTile.p.fill = tile.ownedBy.p.color;
                         }
                         miniTile.p.stroke = BG.state.map.districts[tile.district].color;
                         break;
@@ -356,7 +467,8 @@ Quintus.Objects = function(Q) {
                         miniTile.insert(new Q.UI.Text({label: "AR", size: 12, y: -miniTile.p.h / 4}));
                         break;
                 }
-                miniTile.insert(new Q.UI.Text({label: tile.loc[0] + ", " + tile.loc[1], size: 8, y: 16}));
+                //Uncomment for tile coords
+                //miniTile.insert(new Q.UI.Text({label: tile.loc[0] + ", " + tile.loc[1], size: 8, y: 16}));
                 if(tile.district >= 0){
                     miniTile.insert(new Q.UI.Text({label: tile.district + "", size: 8, y: -4, x: 0}));
                 }
@@ -365,6 +477,47 @@ Quintus.Objects = function(Q) {
                 }
                 this.miniTiles.push(miniTile);
             }
+            let initialDistrict = 0;//BG.MapController.getTileAt(BG.state, player.p.loc);
+            
+            let distContW = bgImgW * 0.75;
+            let distContH = 90;
+            let borderSpacing = 20;
+            this.districtData = this.insert(new Q.UI.Container({x: this.p.w / 2 - distContW / 2,  y: this.p.h / 2 - bgImgH / 2 + 65 - distContH / 2, w: distContW, h:distContH, cx: 0, cy: 0}));
+            let textSize = 26;
+            let smallTextSize = 20;
+            //Name
+            this.districtData.name = this.districtData.insert(new Q.UI.Text({label: "", x: this.districtData.p.w / 6, y: this.districtData.p.h / 2 - textSize / 2, size: textSize, family: "Helvetica Neue"}));
+            //Rank (stars) (todo: make into sprite)
+            this.districtData.rank = this.districtData.insert(new Q.UI.Text({label: "", x: borderSpacing + this.districtData.p.w / 3, y: this.districtData.p.h / 2 - textSize, size: textSize, family: "Helvetica Neue"}));
+            //Value
+            this.districtData.value = this.districtData.insert(new Q.UI.Text({label: "", x: borderSpacing + this.districtData.p.w / 3, y: this.districtData.p.h / 2, size: textSize, family: "Helvetica Neue"}));
+            //Num Of Shops
+            this.districtData.shopIcon = this.districtData.insert(new Q.Sprite({sheet:"tile-structure-" + 3, x: borderSpacing + this.districtData.p.w / 3 + 160, y: this.districtData.p.h / 2}));
+            this.districtData.shopIcon.p.x -= this.districtData.shopIcon.p.w;
+            let shopCont = this.districtData.insert(new Q.UI.Container({x: borderSpacing + this.districtData.p.w / 3 + 140, y: this.districtData.p.h / 2 - textSize, border: 2, radius: 13, w: 26, h: 26, fill:"transparent"}));
+            this.districtData.shopNum = shopCont.insert(new Q.UI.Text({label: "", x: 0, y: -smallTextSize / 2, size: smallTextSize, family: "Helvetica Neue", cy:0}));
+            //Special Tiles? Only add this if the district actually includes these tiles. Right now, only shops are included.
+            
+            //Stocks Owned Pie Chart
+            this.districtData.pieChart = this.districtData.insert(new Q.StockPieChart({x: this.districtData.p.w / 3 * 2, y: this.districtData.p.h / 2, district: BG.state.map.districts[initialDistrict]}));
+            //Stocks bought ratio (bought / max)
+            this.districtData.stockRatio = this.districtData.insert(new Q.UI.Text({label: "", x: this.districtData.p.w - this.districtData.p.w / 6, y: this.districtData.p.h / 2 - textSize, size: textSize, family: "Helvetica Neue"}));
+            //Stock Price
+            this.districtData.stockPrice = this.districtData.insert(new Q.UI.Text({label: "", x: this.districtData.p.w - this.districtData.p.w / 6, y: this.districtData.p.h / 2, size: textSize, family: "Helvetica Neue"}));
+            
+            //this.stage.insert(new Q.UI.Text({x: this.p.w / 2, y: this.p.h / 2 - bgImgH / 2 + 65, label: "Select a district", w: this.p.w, h: this.p.h, family: "Helvetica Neue"}));
+        },
+        displayDistrictData: function(district){
+            let data = BG.state.map.districts[district];
+            this.districtData.name.p.label = data.name;
+            let rankString = "";
+            for(let i = 0; i < data.rank; i++){rankString += "* ";};
+            this.districtData.rank.p.label = rankString;
+            this.districtData.value.p.label = ""+data.value + "G";
+            this.districtData.shopNum.p.label = ""+data.tiles.length;
+            this.districtData.pieChart.displayChart(data);
+            this.districtData.stockRatio.p.label = data.stockAvailable + " / " + data.totalStock;
+            this.districtData.stockPrice.p.label = ""+data.stockPrice + "G"; 
         },
         pulseDistrictTiles: function(district){
             this.miniTiles.forEach((tile) => {
@@ -460,7 +613,7 @@ Quintus.Objects = function(Q) {
                         this.shopRankContainer.insertStars(shop.rank);
                         if(shop.ownedBy){
                             this.shopIcon.p.sheet = "tile-structure-" + shop.rank;
-                            this.shopBackground.p.fill = shop.ownedBy.color;
+                            this.shopBackground.p.fill = shop.ownedBy.p.color;
                         } else {
                             this.shopIcon.p.sheet = "shop-for-sale-signpost";
                             this.shopBackground.p.fill = "#222";
@@ -676,7 +829,7 @@ Quintus.Objects = function(Q) {
             let maxShown = 5;
             if(!dialogue[idx + 1]){
                 state.menus[0].currentCont = optionsArea;
-                state.menus[0].currentCont.displayOptions(state.menus[0].data.onHoverOption, maxShown);
+                state.menus[0].currentCont.displayOptions(state.menus[0].data.onHoverOption, maxShown, stage.options.textLines || 0);
             }
         }
         processDialogue();
@@ -686,11 +839,17 @@ Quintus.Objects = function(Q) {
         let state = BG.state;
         let selected = state.menus[0].data.selected || [0, 0];
         let options = state.menus[0].itemGrid;
-        let menuBox = stage.insert(new Q.UI.Container({x: 50, y:50, w: 195, h: options.length * 40 + 15 , cx:0, cy:0, fill: BG.OptionsController.options.menuColor, opacity:0.8, border:1}));
+        let menuProps = stage.options;
+        let optsNum = options.length + (menuProps.textLines || 0);
+        let menuBox = stage.insert(new Q.UI.Container({x: menuProps.boxX || 50, y:menuProps.boxY || 50, w: menuProps.boxW || 195, h: optsNum * 35 + 15 , cx:0, cy:0, fill: BG.OptionsController.options.menuColor, opacity:0.8, border:1}));
         
         let optionsArea = menuBox.insert(new Q.MenuButtonContainer({x:5, y:5, cx:0, cy:0, w:menuBox.p.w - 10, h:menuBox.p.h - 10, fill: BG.OptionsController.options.menuColor, selected: state.menus[0].data.selected || [0, 0]}));
+        
+        if(menuProps.text){
+            optionsArea.insert(new Q.UI.Text({label: menuProps.text, x:optionsArea.p.w / 2, y: 5, cx:0, cy:0, color: "white"}));
+        }
         state.menus[0].currentCont = optionsArea;
-        state.menus[0].currentCont.displayOptions();
+        state.menus[0].currentCont.displayOptions(false, false, menuProps.textLines || 0);
         state.menus[0].currentCont.p.menuButtons[selected[1]][selected[0]].hover();
     });
     
@@ -715,7 +874,8 @@ Quintus.Objects = function(Q) {
         let baseTileDetails = menuBox.insert(new Q.ShopStatusBox({x: menuBox.p.w / 4 + 10, y: menuBox.p.h / 4, w: BG.c.boxWidth, h: BG.c.boxHeight, radius: 0, shopLoc: shop.loc, stage: stage}));
     });
     Q.scene("districtMenu", function(stage){
-        BG.state.mapMenu = stage.insert(new Q.MapMenu());
+        BG.state.mapMenu = stage.insert(new Q.MapMenu({player: BG.state.turnOrder[0]}));
+        Q.stage(1).hide();
     });
     Q.scene("inputs", function(stage){
         stage.on("step", function(){
@@ -924,8 +1084,6 @@ Quintus.Objects = function(Q) {
             });
         }        
     });
-    
-    
     
     
     

@@ -11,7 +11,7 @@
         {
             "x": 2,
             "y": 0,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -20,7 +20,7 @@
         {
             "x": 4,
             "y": 0,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -42,7 +42,7 @@
         {
             "x": 8,
             "y": 0,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -51,7 +51,7 @@
         {
             "x": 10,
             "y": 0,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -65,7 +65,7 @@
         {
             "x": 12,
             "y": 2,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -75,7 +75,7 @@
         {
             "x": 12,
             "y": 4,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -97,7 +97,7 @@
         {
             "x": 12,
             "y": 8,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -111,7 +111,7 @@
         {
             "x": 0,
             "y": 2,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -120,7 +120,7 @@
         {
             "x": 0,
             "y": 4,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -142,7 +142,7 @@
         {
             "x": 0,
             "y": 8,
-            "value": 100,
+            "value": 250,
             "rank": 1,
             "name": "Bakery",
             "type": "shop",
@@ -151,27 +151,27 @@
         {
             "x": 2,
             "y": 6,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
+            "value": 350,
+            "rank": 2,
+            "name": "Florist",
             "type": "shop",
             "district": 4
         },
         {
             "x": 4,
             "y": 4,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
+            "value": 350,
+            "rank": 2,
+            "name": "Florist",
             "type": "shop",
             "district": 4
         },
         {
             "x": 6,
             "y": 2,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
+            "value": 350,
+            "rank": 2,
+            "name": "Florist",
             "type": "shop",
             "district": 4
         },
@@ -189,9 +189,9 @@
         {
             "x": 10,
             "y": 6,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
+            "value": 350,
+            "rank": 2,
+            "name": "Florist",
             "type": "shop",
             "district": 4
         },
@@ -203,18 +203,18 @@
         {
             "x": 6,
             "y": 8,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
+            "value": 350,
+            "rank": 2,
+            "name": "Florist",
             "type": "shop",
             "district": 4
         },
         {
             "x": 8,
             "y": 8,
-            "value": 100,
-            "rank": 1,
-            "name": "Bakery",
+            "value": 350,
+            "rank": 2,
+            "name": "Florist",
             "type": "shop",
             "district": 4
         },

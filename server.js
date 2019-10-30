@@ -4,7 +4,7 @@ let Server = function(fs){
     this.userID = 0;
     const filesFolder = 'public/';
     this.filesFolder = filesFolder;
-    this.loadDirectories = ["audio", "data/constants", "data/fonts", "images/3d", "images/2d"];
+    this.loadDirectories = ["audio", "data/constants", "data/fonts", "images/3d", "images/2d", "images/ui"];
     function readDirectory(path, filesFolder){
         let files = [];
         fs.readdirSync(filesFolder + path).forEach(file => {
@@ -55,7 +55,7 @@ Server.prototype.addUserToGame = function(user, socket, room){
             map: map,
             settings:{
                 mode: "ffa",
-                numOfPlayers:2
+                numOfPlayers:1
             },
             mapData:this.mapsData[map]
         });

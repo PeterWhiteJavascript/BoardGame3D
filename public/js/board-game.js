@@ -694,7 +694,7 @@ var boardGameCore = function(exportTarget, key){
                         if(!BG.Utility.isServer()){
                             BG.Q.stageScene("districtMenu", 3, props);
                         }
-                        BG.MenuController.makeMenu(state, {...{menu: "districtMenu", display: "dialogue"}, ...props});
+                        BG.MenuController.makeMenu(state, {...{menu: "districtMenu", display: "dialogue", sceneNum: -1}, ...props});
                         break;
                     case "buyStockCyclerMenu":
                         BG.MenuController.initializeNumberCycler(state, menu, props);
@@ -707,7 +707,7 @@ var boardGameCore = function(exportTarget, key){
                         if(!BG.Utility.isServer()){
                             BG.Q.stageScene("districtMenu", 3, props);
                         }
-                        BG.MenuController.makeMenu(state, {...{menu: "districtMenu", display: "dialogue"}, ...props});
+                        BG.MenuController.makeMenu(state, {...{menu: "districtMenu", display: "dialogue", sceneNum: -1}, ...props});
                         break;
                     case "sellStockCyclerMenu":
                         BG.MenuController.initializeNumberCycler(state, menu, props);
@@ -773,11 +773,12 @@ var boardGameCore = function(exportTarget, key){
                 let menu = props.menu;
                 let display = props.display;
                 BG.MenuController.removeMenus(state);
+                props.sceneNum = props.sceneNum || 2;
                 let data = {...BG.MenuController.inputStates[menu], ...props};
                 BG.MenuController.initializeMenu(state, data, props);
                 if(data.preDisplay) data.preDisplay(state);
                 if(!BG.Utility.isServer() && display){
-                    BG.Q.stageScene(display, 2);
+                    BG.Q.stageScene(display, props.sceneNum, props.menuProps);
                 }
                 return {func: "makeMenu", props: props};
             },
@@ -844,7 +845,7 @@ var boardGameCore = function(exportTarget, key){
                             return [
                                 {func: "setBGValue", path: "preventMultipleInputs", value: true}, 
                                 {func: "removeItem", item: "shopSelector"}, 
-                                BG.MenuController.makeMenu(state, {menu: "shopsMenu", selected: backOpt, display: "menu"})
+                                BG.MenuController.inputStates.playerTurnMenu.showShopsMenu(state, backOpt)
                             ];
                         };
                         break;
@@ -855,7 +856,7 @@ var boardGameCore = function(exportTarget, key){
                             return [
                                 {func: "setBGValue", path: "preventMultipleInputs", value: true}, 
                                 {func: "removeItem", item: "shopSelector"},
-                                BG.MenuController.makeMenu(state, {menu: "viewMenu", selected: backOpt, display: "menu"})
+                                BG.MenuController.inputStates.playerTurnMenu.showViewMenu(state, backOpt)
                             ];
                         };
                         break;
@@ -878,11 +879,13 @@ var boardGameCore = function(exportTarget, key){
                 };
                 state.shopSelector =  BG.GameController.createObject("ShopSelector", startPos, {state: state, type: selectType});
                 if(!BG.Utility.isServer()){
-                    BG.Q.clearStage(2);
                     BG.preventMultipleInputs = false;
                     BG.scene.add(state.shopSelector);
                 }
-                return {func: "makeMoveShopSelector", confirmType: confirmType, backFunc: backFunc, startPos: startPos};
+                return [
+                    {func: "clearStage", num: 2}, 
+                    {func: "makeMoveShopSelector", confirmType: confirmType, backFunc: backFunc, startPos: startPos}
+                ];
             },
             convertArrayToMenuOptions: function(array, textProp, func){
                 return array.map((itm) => {
@@ -1017,7 +1020,7 @@ var boardGameCore = function(exportTarget, key){
                     goBack: (state) => {
                         return [
                             {func: "clearStage", num: 2},
-                            BG.MenuController.makeMenu(state, {menu: "shopsMenu", selected: [0, 2], display: "menu"})
+                            BG.MenuController.inputStates.playerTurnMenu.showViewMenu(state, [0, 2])
                         ];
                     }
                 },
@@ -1251,33 +1254,36 @@ var boardGameCore = function(exportTarget, key){
                             for(let i = 0; i < rolls; i++){
                                 let num = ~~(state.random() * (dieMax + 1 - dieMin)) + dieMin;
                                 roll += num;
-                                roll = 1;
+                                //roll = 1;
                                 rollsNums.push(num);
                             }
                             state.currentMovementNum = roll;
                             state.menus[0].data = {func: "rollDie", roll: roll, self: true, rollsNums: rollsNums};
                         }
-                        return state.menus[0].data;
+                        return [
+                            {func: "clearStage", num: 2},
+                            state.menus[0].data
+                        ];
                     },
-                    showShopsMenu: (state) => {
-                        return BG.MenuController.makeMenu(state, {menu: "shopsMenu", selected: [0, 0], sound: "change-menu", display: "menu"});
+                    showShopsMenu: (state, selected) => {
+                        return BG.MenuController.makeMenu(state, {menu: "shopsMenu", selected: selected || [0, 0], sound: "change-menu", display: "menu"});
                     },
-                    showStocksMenu: (state) => {
-                        return BG.MenuController.makeMenu(state, {menu: "stocksMenu", selected: [0, 0], sound: "change-menu", display: "menu"});
+                    showStocksMenu: (state, selected) => {
+                        return BG.MenuController.makeMenu(state, {menu: "stocksMenu", selected: selected || [0, 0], sound: "change-menu", display: "menu"});
                     },
-                    showItemsMenu: (state) => {
-                        return BG.MenuController.makeMenu(state, {menu: "itemsMenu", selected: [0, 0], sound: "change-menu", display: "menu"});
+                    showItemsMenu: (state, selected) => {
+                        return BG.MenuController.makeMenu(state, {menu: "itemsMenu", selected: selected || [0, 0], sound: "change-menu", display: "menu"});
                     },
                     showDealMenu: (state) => {
                         return BG.MenuController.makeMenu(state, {
                             menu: "selectAPlayerMenu",
                             next: "setUpDeal",
-                            prev: ["playerTurnMenu", [0, 4]], 
+                            prev: ["playerTurnMenu", [0, 4], "menu"], 
                             display: "dialogue"
                         });
                     },
-                    showViewMenu: (state) => {
-                        return BG.MenuController.makeMenu(state, {menu: "viewMenu", selected: [0, 0], sound: "change-menu", display: "menu"});
+                    showViewMenu: (state, selected) => {
+                        return BG.MenuController.makeMenu(state, {menu: "viewMenu", selected: [0, 0] || selected, sound: "change-menu", display: "menu"});
                     }
                 },
                 shopsMenu: {
@@ -1340,10 +1346,10 @@ var boardGameCore = function(exportTarget, key){
                         ["Back", "goBack"]
                     ],
                     showSellStockMenu: (state, selected) => {
-                        return BG.MenuController.makeCustomMenu(state, "sellStockMenu", {type: "sellStock", prev: ["stocksMenu", [0, 1]], selected: selected});
+                        return BG.MenuController.makeCustomMenu(state, "sellStockMenu", {type: "sellStock", prev: ["stocksMenu", [0, 0], "menu"], selected: selected});
                     },
                     showCheckStockMenu: (state) => {
-                        return BG.MenuController.makeCustomMenu(state, "checkStockMenu", {type: "checkStock", prev: ["stocksMenu", [0, 2]]});
+                        return BG.MenuController.makeCustomMenu(state, "checkStockMenu", {type: "checkStock", prev: ["stocksMenu", [0, 1], "menu"]});
                     },
                     goBack: (state) => {
                         return BG.MenuController.makeMenu(state, {menu: "playerTurnMenu", selected: [0, 2], sound: "change-menu", display: "menu"});
@@ -1355,7 +1361,7 @@ var boardGameCore = function(exportTarget, key){
                         state.map.districts.forEach((d, i) => {
                             state.menus[0].itemGrid.push([[d.name, "selectDistrict", [i]]]);
                         });
-                        state.menus[0].itemGrid.push([["Back", "goBack"]]);
+                        //state.menus[0].itemGrid.push([["Back", "goBack"]]);
                         switch(state.menus[0].data.type){
                             case "buyStock":
                                 state.menus[0].data.text = ["Select a district to buy stock in."];
@@ -1370,6 +1376,7 @@ var boardGameCore = function(exportTarget, key){
                     onHoverOption: (option, idx) => {
                         if(idx < BG.state.map.districts.length){
                             BG.state.mapMenu.pulseDistrictTiles(idx);
+                            BG.state.mapMenu.displayDistrictData(idx);
                         }
                     },
                     selectDistrict: (state, itemIdx) => {
@@ -1378,31 +1385,24 @@ var boardGameCore = function(exportTarget, key){
                                 return [
                                     {func: "clearStage", num: 2},
                                     {func: "clearStage", num: 3},
+                                    {func: "showHUD"},
                                     BG.MenuController.makeCustomMenu(state, "buyStockCyclerMenu", {cycler: 4, district: itemIdx})
                                 ];
                             case "sellStock":
                                 return [
                                     {func: "clearStage", num: 2},
                                     {func: "clearStage", num: 3},
+                                    {func: "showHUD"},
                                     BG.MenuController.makeCustomMenu(state, "sellStockCyclerMenu", {cycler: 4, district: itemIdx})
                                 ];
                         }
                     },
                     goBack: (state) => {
-                        if(state.forceSellAssets){
-                            return [
-                                {func: "clearStage", num: 3},
-                                BG.MenuController.makeMenu(state, {menu: "forceSellAsset", display: "dialogue"})
-                            ];
-
-                        } else {
-                            return [
-                                {func: "clearStage", num: 3},
-                                BG.MenuController.makeMenu(state, {menu: "stocksMenu", selected: [0, 0], sound: "change-menu", display: "menu"})
-                                //Not sure what this next line was for.
-                                //BG.MenuController.makeMenu(state, {menu: state.menus[0].data.prev[0], selected: state.menus[0].data.prev[1], sound: "change-menu", display: "dialogue"})
-                            ];
-                        }
+                        return [
+                            {func: "clearStage", num: 3},
+                            {func: "showHUD"},
+                            BG.MenuController.makeMenu(state, {menu: state.menus[0].data.prev[0], selected: state.menus[0].data.prev[1], sound: "change-menu", display: state.menus[0].data.prev[2]})
+                        ];
                     }
                 },
                 askIfBuyingStock: {
@@ -1413,7 +1413,7 @@ var boardGameCore = function(exportTarget, key){
                     ],
                     text: ["Would you like to buy stock?"],
                     confirmTrue: (state) => {
-                        return BG.MenuController.makeCustomMenu(state, "buyStockMenu", {type: "buyStock", prev: ["askIfBuyingStock", [0, 0]], selected: 0});
+                        return BG.MenuController.makeCustomMenu(state, "buyStockMenu", {type: "buyStock", prev: ["askIfBuyingStock", [0, 0], "dialogue"], selected: 0});
                     },
                     confirmFalse: (state) => {
                         let props = [{func: "clearStage", num: 2}];
@@ -1455,7 +1455,7 @@ var boardGameCore = function(exportTarget, key){
                         }
                     },  
                     goBack: (state) => {
-                        return BG.MenuController.makeCustomMenu(state, "buyStockMenu", {type: "buyStock", prev: ["askIfBuyingStock", [0, 0]], selected: [0, state.menus[0].data.district.id]});
+                        return BG.MenuController.makeCustomMenu(state, "buyStockMenu", {type: "buyStock", prev: ["askIfBuyingStock", [0, 0], "dialogue"], selected: [0, state.menus[0].data.district.id]});
                     }
                 },
                 sellStockCyclerMenu: {
@@ -1501,7 +1501,7 @@ var boardGameCore = function(exportTarget, key){
                         return BG.MenuController.inputStates.checkStockMenu.goBack(state);
                     },
                     goBack: (state) => {
-                        return BG.MenuController.makeMenu(state, {menu: "stocksMenu", selected: [0, 1], sound: "change-menu", display: "menu"});
+                        return BG.MenuController.inputStates.playerTurnMenu.showStocksMenu(state, [0, 1]);
                     }
                 },
                 itemsMenu: {
@@ -1514,11 +1514,49 @@ var boardGameCore = function(exportTarget, key){
                     },
                     options: [],
                     useItem: (state, itemIdx) => {
-                        return BG.GameController.useItem(state, itemIdx);
+                        //Open a minimenu to to confirm item use.
+                        return BG.MenuController.makeMenu(state, {
+                            display: "menu",
+                            menu: "confirmer",
+                            sceneNum: 3,
+                            menuProps: {
+                                boxX: 200,
+                                boxY: 50,
+                                boxW: 160,
+                                text: "Use " + state.turnOrder[0].p.items[itemIdx] + "?",
+                                textLines: 1
+                            },
+                            props: {
+                                itemIdx: itemIdx,
+                                menuIdx: itemIdx
+                            },
+                            confirm: (state, itemIdx) => {
+                                return BG.GameController.useItem(state, itemIdx);
+                            },
+                            goBack: (state, menuIdx) => {
+                                return [
+                                    {func: "clearStage", num: 3},
+                                    BG.MenuController.inputStates.playerTurnMenu.showItemsMenu(state, [0, menuIdx || 0])
+                                ]
+                            }
+                        });
+                        
                     },
                     goBack: (state) => {
                         return BG.MenuController.makeMenu(state, {menu: "playerTurnMenu", selected: [0, 3], sound: "change-menu", display: "menu"});
                     }
+                },
+                //A small yes/no box with passed in confirm and goBack functions
+                confirmer: {
+                    func: "navigateMenu",
+                    preDisplay: (state) => {  
+                        state.menus[0].itemGrid[0][0][2][0] = state.menus[0].data.props.itemIdx;
+                        state.menus[0].itemGrid[1][0][2][0] = state.menus[0].data.props.menuIdx;
+                    },
+                    options:[
+                        ["Yes", "confirm", [0]],
+                        ["No", "goBack", [0]]
+                    ],
                 },
                 viewMenu: {
                     func: "navigateMenu",
@@ -1623,7 +1661,7 @@ var boardGameCore = function(exportTarget, key){
                             BG.MenuController.makeMenu(state, {
                                 menu: "selectAPlayerMenu", 
                                 next: "setUpDeal",
-                                prev: ["playerTurnMenu", [0, 4]],
+                                prev: ["playerTurnMenu", [0, 4], "menu"],
                                 display: "dialogue"
                             })
                         ];
@@ -1838,16 +1876,16 @@ var boardGameCore = function(exportTarget, key){
                         return BG.MenuController.inputStates.setsMenu.goBack(state);
                     },
                     goBack: (state) => {
-                        return BG.MenuController.makeMenu(state, {menu: "viewMenu", selected: [0, 2], sound: "change-menu", display: "menu"})
+                        return BG.MenuController.inputStates.playerTurnMenu.showViewMenu(state, [0, 2]);
                     }
                 },
                 mapMenu: {
                     "func": "confirmer",
                     confirm: (state) => {
-                        return BG.MenuController.inputStates.mapMenu.goBack(state);
+                        return BG.MenuController.inputStates.mapMenu.goBack(state, [0, 1]);
                     },
                     goBack: (state) => {
-                        return BG.MenuController.makeMenu(state, {menu: "viewMenu", selected: [0, 1], sound: "change-menu", display: "menu"})
+                        return BG.MenuController.inputStates.playerTurnMenu.showViewMenu(state, [0, 1]);
                     }
                 },
                 menuMovePlayer: {
@@ -1863,7 +1901,10 @@ var boardGameCore = function(exportTarget, key){
                     confirmFalse: (state) => {
                         let loc = BG.GameController.playerGoBackMove(state, state.turnOrder[0].p.playerId);
                         state.menus[0].data = {func: "playerMovement", loc: loc};
-                        return {func: "playerGoBackMove", loc: loc};
+                        return [
+                            {func: "clearStage", num: 2},
+                            {func: "playerGoBackMove", loc: loc}
+                        ];
                     }
                 },
                 askBuyShop: {
@@ -1946,7 +1987,7 @@ var boardGameCore = function(exportTarget, key){
                         }
                     },
                     sellStock: (state) => {
-                        return BG.MenuController.makeCustomMenu(state, "sellStockMenu", {type: "sellStock", prev: ["stocksMenu", [0, 1]]});
+                        return BG.MenuController.makeCustomMenu(state, "sellStockMenu", {type: "sellStock", prev: ["stocksMenu", [0, 0], "menu"]});
                     },
                     sellShop: (state) => {
                         return BG.MenuController.makeMoveShopSelector(state, "confirmSellShop", "forceSellAsset", state.turnOrder[0].p.loc);
@@ -2328,7 +2369,11 @@ var boardGameCore = function(exportTarget, key){
                     };
 
                     player.p.items.splice(itemIdx, 1);
-                    return {func: "useItem", itemIdx: itemIdx};
+                    return [
+                        {func: "clearStage", num: 2},
+                        {func: "clearStage", num: 3},
+                        {func: "useItem", itemIdx: itemIdx}
+                    ];
                 } else {
                     /* Non-usable items (Items that are prompted to use at a later time and not used from the menu)*/
                     /* 25% off Shop Coupon
@@ -2463,7 +2508,6 @@ var boardGameCore = function(exportTarget, key){
                 });
             },
             startRollingDie: function(state, rollsNums, player){
-                BG.Q.clearStage(2);
                 state.dice = [];
                 let playerPos = BG.Utility.getXZ(player.p.loc);
                 let scene = BG.scene;
@@ -2648,7 +2692,11 @@ var boardGameCore = function(exportTarget, key){
                     case "main":
                         BG.GameController.resetRoll(state, player, true);
                         BG.MenuController.inputStates.playerTurnMenu.rollDie(state);
-                        return [{func: "resetRoll", choose: true}, {func: "rollDie", rollsNums: state.menus[0].data.rollsNums}];
+                        return [
+                            {func: "resetRoll", choose: true}, 
+                            {func: "clearStage", num: 2}, 
+                            {func: "rollDie", rollsNums: state.menus[0].data.rollsNums}
+                        ];
                     case "vendor":
                         return BG.GameController.endTurn(state);
                     case "itemshop":
@@ -2658,7 +2706,11 @@ var boardGameCore = function(exportTarget, key){
                     case "roll-again":
                         BG.GameController.resetRoll(state, player);
                         BG.MenuController.inputStates.playerTurnMenu.rollDie(state);
-                        return [{func: "resetRoll"}, {func: "rollDie", rollsNums: state.menus[0].data.rollsNums}];
+                        return [
+                            {func: "resetRoll"}, 
+                            {func: "clearStage", num: 2},
+                            {func: "rollDie", rollsNums: state.menus[0].data.rollsNums}
+                        ];
                     case "toll":
                         return BG.GameController.endTurn(state);
                     case "bingo":
@@ -2743,18 +2795,19 @@ var boardGameCore = function(exportTarget, key){
                 
 
                 BG.preventMultipleInputs = true;
-                if(!state.doIt){
-                    //BG.GameController.changePlayerStock(state.players[1], state.map.districts[4], 60, -state.map.districts[4].stockPrice * 60)
+                if( !state.doIt){
+                    let stock = 20;
+                    BG.GameController.changePlayerStock(state.players[0], state.map.districts[0], stock, -state.map.districts[0].stockPrice * stock)
                     //BG.GameController.buyShop(state, player, BG.MapController.getTileAt(state, [6, 4]), 1);
                     //BG.GameController.buyShop(state, state.turnOrder[0], BG.MapController.getTileAt(state, [6, 4]), 0)
                     //BG.GameController.buyStock(state.turnOrder[0], 10, state.map.districts[0].stockPrice * 10, state.map.districts[0]);
-                    /*if(!BG.Utility.isServer()){
-                        setTimeout(function(){
-                            BG.Q.inputs["up"] = true;
-                        setTimeout(function(){
-                            BG.Q.inputs["confirm"] = true;
+                    if(!BG.Utility.isServer()){
                         setTimeout(function(){
                             BG.Q.inputs["down"] = true;
+                        setTimeout(function(){
+                            BG.Q.inputs["down"] = true;
+                        setTimeout(function(){
+                            BG.Q.inputs["confirm"] = true;
                             
                         setTimeout(function(){
                             BG.Q.inputs["confirm"] = true;
@@ -2762,7 +2815,7 @@ var boardGameCore = function(exportTarget, key){
                         }, 100);
                         }, 100);
                         }, 100);
-                    }*/
+                    }
                     state.doIt = true;
                 }
                 
