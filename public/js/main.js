@@ -1,5 +1,6 @@
 import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r108/examples/jsm/loaders/GLTFLoader.js';
 
+
 $(function(){
     require(['socket.io/socket.io.js']);
     
@@ -22,9 +23,14 @@ $(function(){
     
     //Quinuts is used for handling inputs and displaying UI
     BG.Q = Quintus().include("Sprites, Scenes, Touch, UI, Anim, Input, Objects")
-            .setup("quintus", {development:true, width:$("#content-container").width(), height:$("#content-container").height()})
+            .setup("quintus", {development:true, width:window.screen.width, height:window.screen.height})
             .controls(true)
             .touch();
+    //The width and height are default set to the maximum screen dimensions earlier to make the canvas not need to be resized.
+    //Now, set the size to the current for proper scaling.
+    BG.Q.width = window.innerWidth;
+    BG.Q.height = window.innerHeight;
+    
     BG.THREE = THREE;
     
     BG.Q.setImageSmoothing(false);
@@ -71,7 +77,7 @@ $(function(){
             let imageFiles = files["images/2d"];
             let uiFiles = files["images/ui"];
             let fontFiles = files["data/fonts"];
-            let totalFiles = audioFiles.length + dataFiles.length + materialFiles.length + fontFiles.length + imageFiles.length;
+            let totalFiles = audioFiles.length + dataFiles.length + materialFiles.length + gltfFiles.length + imageFiles.length + uiFiles.length + fontFiles.length;
             let loadedFiles = 0;
             function checkFinished(){
                 if(totalFiles === loadedFiles){
@@ -146,7 +152,7 @@ $(function(){
             });
             //Load UI files with the Quintus loader are they are used in Quintus Sprites.
             BG.Q.load(uiFiles, () => {
-                loadedFiles+= uiFiles.length;
+                loadedFiles += uiFiles.length;
                 checkFinished();
             });
         }
@@ -212,6 +218,10 @@ $(function(){
                                     //player.sprite.destroyArrows();
                                     player.p.allowMovement = false;
                                     break;
+                                //Default to removing a certain Q object (removing a certain menu).
+                                default:
+                                    BG.Q(r.item, r.stage).destroy();
+                                    break
                             }
                             break;
                         case "showHUD":
@@ -380,8 +390,6 @@ $(function(){
             };
             socket.on("inputResult", BG.applyInputResult);
         });
-        
-        
     });
     
     

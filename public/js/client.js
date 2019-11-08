@@ -263,13 +263,11 @@ let clientSide = function(){
                         }, td);
                         
                         scene.add(td.sprite);
-                        
                     }
-                    
+                    scene.add(BG.ObjectData["player.gltf"].scene)
                     for(let i = 0; i < gameData.players.length; i++){
                         scene.add(gameData.players[i].sprite);
                     }
-                    
                     
                     function c(x, z){
                         let object = BG.ObjectData["selector.obj"].clone();
@@ -308,6 +306,10 @@ let clientSide = function(){
                     camera.aspect = window.innerWidth / window.innerHeight;
                     camera.updateProjectionMatrix();
                     renderer.setSize( window.innerWidth, window.innerHeight );
+                    BG.Q.width = window.innerWidth;
+                    BG.Q.height = window.innerHeight;
+                    BG.Q(".scalable", 2).trigger("resize");
+                    BG.Q(".centered", 2).trigger("center");
                 }
             }
         }
