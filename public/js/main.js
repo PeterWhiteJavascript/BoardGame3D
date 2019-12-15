@@ -1,4 +1,4 @@
-import {GLTFLoader} from 'https://threejsfundamentals.org/threejs/resources/threejs/r108/examples/jsm/loaders/GLTFLoader.js';
+import {GLTFLoader} from '../lib/GLTFLoader.js';
 
 
 $(function(){

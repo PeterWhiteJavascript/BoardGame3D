@@ -1,0 +1,36 @@
+{
+    "tiles": [
+    
+    ],
+    "districts": [
+        
+    ],
+    "sets":[
+        
+    ],
+    "setPieces":{
+        
+    },
+    "map": {
+        "w": 16,
+        "h": 12,
+        "bgm": "bgm-01"
+    },
+    "modes": {
+        "ffa": {
+            "startMoney": 1000,
+            "goal": 20000,
+            "bankruptcyLimit": 3
+        },
+        "teams": {
+            "startMoney": 2000,
+            "goal": 20000,
+            "bankruptcyLimit": 3
+        },
+        "timed": {
+            "startMoney": 2000,
+            "turns": 40,
+            "bankruptcyLimit": 3
+        }
+    }
+}

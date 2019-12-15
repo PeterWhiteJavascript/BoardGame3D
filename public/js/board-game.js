@@ -263,10 +263,11 @@ var boardGameCore = function(exportTarget, key){
                             }
                         }
                         //If the vendor has a purchase, figure out if the player has enough money to purchase (this is somtimes free)
+                        //Player also needs to have room in his bag.
                         if(tile.purchase){
                             let needed = tile.purchase[1];
                             //needed can only be a money amount.
-                            if(player.p.money >= needed){
+                            if(player.p.money >= needed && player.p.items.length < player.p.maxItems){
                                 options.push("purchase");
                             }
                             
@@ -309,7 +310,9 @@ var boardGameCore = function(exportTarget, key){
                         
                     case "itemshop":
                         state.tileTo = tile;
-                        BG.MenuController.makeMenu(state, {menu: "askIfWantToBuyItem", display: "dialogue"});
+                        if(player.p.items.length < player.p.maxItems){
+                            BG.MenuController.makeMenu(state, {menu: "askIfWantToBuyItem", display: "dialogue"});
+                        };
                         return true;
                     case "toll":
                         let addMove = 1;
@@ -2491,6 +2494,10 @@ var boardGameCore = function(exportTarget, key){
             },
             changePlayerRank: function(player, rank){
                 player.p.rank += rank;
+                BG.GameController.updatePlayerMaxItems(player);
+            },
+            updatePlayerMaxItems: function(player){
+                player.p.maxItems = 2 + 1 * player.p.rank;
             },
             //TODO: use player.p.items
             changeSetItemQuantity: function(player, itemName, number){
@@ -2803,6 +2810,7 @@ var boardGameCore = function(exportTarget, key){
                 
 
                 BG.preventMultipleInputs = true;
+                state.doIt = true;
                 if( !state.doIt){
                     let stock = 20;
                     BG.GameController.changePlayerStock(state.players[0], state.map.districts[0], stock, -state.map.districts[0].stockPrice * stock)
