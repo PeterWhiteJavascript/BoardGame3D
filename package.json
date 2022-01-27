@@ -16,7 +16,7 @@
         "express": "^4.16.4",
         "seedrandom": "^2.4.4",
         "socket.io": "^2.2.0",
-        "three": "^0.105.2"
+        "three": "^0.137.0"
     },
     "scripts": {
         "start": "node app.js"
